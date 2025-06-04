@@ -13,10 +13,10 @@ export default function Landing() {
         {/* Header */}
         <header className="text-center mb-12">
           <h1 className="text-4xl font-bold text-white mb-4">
-            Paraguay Shopping Lists
+            Listas de Compras Paraguai
           </h1>
           <p className="text-xl text-blue-100 max-w-2xl mx-auto">
-            Manage international shopping lists with real-time collaboration for vendors and administrators
+            Gerencie listas de compras internacionais com colaboração em tempo real para vendedores e administradores
           </p>
         </header>
 
@@ -25,9 +25,9 @@ export default function Landing() {
           <Card className="bg-white/95 backdrop-blur">
             <CardHeader className="text-center">
               <ShoppingCart className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-              <CardTitle>Create Shopping Lists</CardTitle>
+              <CardTitle>Criar Listas de Compras</CardTitle>
               <CardDescription>
-                Vendors can create detailed shopping lists with product quantities and estimated prices
+                Vendedores podem criar listas detalhadas com quantidades e preços estimados dos produtos
               </CardDescription>
             </CardHeader>
           </Card>
@@ -35,9 +35,9 @@ export default function Landing() {
           <Card className="bg-white/95 backdrop-blur">
             <CardHeader className="text-center">
               <Users className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-              <CardTitle>Real-time Processing</CardTitle>
+              <CardTitle>Processamento em Tempo Real</CardTitle>
               <CardDescription>
-                Administrators can process lists during shopping trips, marking items as purchased or cancelled
+                Administradores podem processar listas durante viagens de compras, marcando itens como comprados ou cancelados
               </CardDescription>
             </CardHeader>
           </Card>
@@ -45,9 +45,9 @@ export default function Landing() {
           <Card className="bg-white/95 backdrop-blur">
             <CardHeader className="text-center">
               <Check className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-              <CardTitle>Mobile Optimized</CardTitle>
+              <CardTitle>Otimizado para Mobile</CardTitle>
               <CardDescription>
-                Clean, mobile-first design optimized for iPhone with offline capabilities
+                Design limpo e mobile-first otimizado para iPhone com capacidades offline
               </CardDescription>
             </CardHeader>
           </Card>
@@ -57,16 +57,16 @@ export default function Landing() {
         <div className="text-center">
           <Card className="bg-white/95 backdrop-blur max-w-md mx-auto">
             <CardContent className="pt-6">
-              <h3 className="text-2xl font-semibold mb-4">Get Started</h3>
+              <h3 className="text-2xl font-semibold mb-4">Começar</h3>
               <p className="text-gray-600 mb-6">
-                Sign in with your account to start managing shopping lists
+                Entre com sua conta para começar a gerenciar listas de compras
               </p>
               <Button 
                 onClick={handleLogin}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                 size="lg"
               >
-                Sign In
+                Entrar
               </Button>
             </CardContent>
           </Card>

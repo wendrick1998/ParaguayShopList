@@ -7,12 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 // Pages
-import Landing from "@/pages/landing";
-import Home from "@/pages/home";
-import CreateList from "@/pages/create-list";
-import ListDetails from "@/pages/list-details";
-import AdminProcessing from "@/pages/admin-processing";
-import NotFound from "@/pages/not-found";
+import { Landing, Home, CreateList, ListDetails, AdminProcessing, NotFound } from "@/pages";
 
 function AuthWrapper({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();

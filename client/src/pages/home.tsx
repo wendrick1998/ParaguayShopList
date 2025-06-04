@@ -20,13 +20,13 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <ShoppingCart className="h-8 w-8 text-blue-600" />
-              <h1 className="text-2xl font-bold text-gray-900">Shopping Lists</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Listas de Compras</h1>
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">Welcome,</span>
+                <span className="text-sm text-gray-600">Bem-vindo,</span>
                 <span className="font-medium text-gray-900">
-                  {user?.firstName || user?.email || "User"}
+                  {user?.firstName || user?.email || "Usuário"}
                 </span>
                 {user?.isAdmin && (
                   <Badge variant="secondary" className="bg-blue-100 text-blue-800">
@@ -36,7 +36,7 @@ export default function Home() {
               </div>
               <Button variant="outline" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
+                Sair
               </Button>
             </div>
           </div>
@@ -52,9 +52,9 @@ export default function Home() {
               <Card className="hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 border-blue-300 bg-blue-50/50">
                 <CardContent className="flex flex-col items-center justify-center py-8">
                   <Plus className="h-12 w-12 text-blue-600 mb-4" />
-                  <h3 className="text-lg font-semibold text-blue-900">Create New List</h3>
+                  <h3 className="text-lg font-semibold text-blue-900">Criar Nova Lista</h3>
                   <p className="text-sm text-blue-700 text-center mt-2">
-                    Start a new shopping list for your next trip
+                    Comece uma nova lista de compras para sua próxima viagem
                   </p>
                 </CardContent>
               </Card>
@@ -65,9 +65,9 @@ export default function Home() {
                 <Card className="hover:shadow-md transition-shadow cursor-pointer">
                   <CardContent className="flex flex-col items-center justify-center py-8">
                     <Settings className="h-12 w-12 text-orange-600 mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900">Admin Panel</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">Painel Admin</h3>
                     <p className="text-sm text-gray-600 text-center mt-2">
-                      Process and manage active shopping lists
+                      Processe e gerencie listas de compras ativas
                     </p>
                   </CardContent>
                 </Card>
@@ -77,23 +77,23 @@ export default function Home() {
 
           {/* Recent Lists */}
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Your Shopping Lists</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Suas Listas de Compras</h2>
             <Card>
               <CardHeader>
-                <CardTitle>Recent Lists</CardTitle>
+                <CardTitle>Listas Recentes</CardTitle>
                 <CardDescription>
-                  Your most recent shopping lists will appear here
+                  Suas listas de compras mais recentes aparecerão aqui
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-8 text-gray-500">
                   <ShoppingCart className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-lg mb-2">No shopping lists yet</p>
-                  <p className="text-sm">Create your first shopping list to get started</p>
+                  <p className="text-lg mb-2">Nenhuma lista de compras ainda</p>
+                  <p className="text-sm">Crie sua primeira lista de compras para começar</p>
                   <Link href="/create-list">
                     <Button className="mt-4 bg-blue-600 hover:bg-blue-700">
                       <Plus className="h-4 w-4 mr-2" />
-                      Create List
+                      Criar Lista
                     </Button>
                   </Link>
                 </div>
