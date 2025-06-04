@@ -5,6 +5,13 @@ import { insertUserSchema, insertShoppingListSchema, insertListItemSchema } from
 import bcrypt from "bcrypt";
 import session from "express-session";
 
+// Extend session data interface
+declare module 'express-session' {
+  interface SessionData {
+    userId: number;
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Session configuration
   app.use(session({
@@ -19,18 +26,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Authentication middleware
   const requireAuth = (req: any, res: any, next: any) => {
-    if (!req.session.userId) {
+    if (!req.session?.userId) {
       return res.status(401).json({ message: "Authentication required" });
     }
     next();
   };
 
   const requireAdmin = async (req: any, res: any, next: any) => {
-    if (!req.session.userId) {
+    if (!req.session?.userId) {
       return res.status(401).json({ message: "Authentication required" });
     }
     
-    const user = await storage.getUser(req.session.userId);
+    const user = await storage.getUser(req.session.userId!);
     if (!user?.isAdmin) {
       return res.status(403).json({ message: "Admin access required" });
     }

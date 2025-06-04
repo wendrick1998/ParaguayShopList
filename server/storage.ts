@@ -1,4 +1,16 @@
-import { users, shoppingLists, listItems, type User, type InsertUser, type ShoppingList, type InsertShoppingList, type ListItem, type InsertListItem } from "@shared/schema";
+import {
+  users,
+  shoppingLists,
+  listItems,
+  type User,
+  type InsertUser,
+  type ShoppingList,
+  type InsertShoppingList,
+  type ListItem,
+  type InsertListItem,
+} from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -25,128 +37,136 @@ export interface IStorage {
   getShoppingListsWithItems(): Promise<(ShoppingList & { items: ListItem[] })[]>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User> = new Map();
-  private shoppingLists: Map<number, ShoppingList> = new Map();
-  private listItems: Map<number, ListItem> = new Map();
-  private currentUserId = 1;
-  private currentListId = 1;
-  private currentItemId = 1;
-
+export class DatabaseStorage implements IStorage {
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.email === email);
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = {
-      ...insertUser,
-      id,
-      createdAt: new Date(),
-    };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...insertUser,
+        isAdmin: insertUser.isAdmin || false,
+      })
+      .returning();
     return user;
   }
 
   // Shopping list methods
   async getShoppingLists(userId: number): Promise<ShoppingList[]> {
-    return Array.from(this.shoppingLists.values()).filter(list => list.userId === userId);
+    return await db.select().from(shoppingLists).where(eq(shoppingLists.userId, userId));
   }
 
   async getShoppingList(id: number): Promise<ShoppingList | undefined> {
-    return this.shoppingLists.get(id);
+    const [list] = await db.select().from(shoppingLists).where(eq(shoppingLists.id, id));
+    return list || undefined;
   }
 
   async createShoppingList(insertList: InsertShoppingList): Promise<ShoppingList> {
-    const id = this.currentListId++;
-    const now = new Date();
-    const list: ShoppingList = {
-      ...insertList,
-      id,
-      createdAt: now,
-      updatedAt: now,
-    };
-    this.shoppingLists.set(id, list);
+    const [list] = await db
+      .insert(shoppingLists)
+      .values({
+        ...insertList,
+        status: insertList.status || "draft",
+        description: insertList.description || null,
+      })
+      .returning();
     return list;
   }
 
   async updateShoppingList(id: number, updates: Partial<ShoppingList>): Promise<ShoppingList | undefined> {
-    const list = this.shoppingLists.get(id);
-    if (!list) return undefined;
-
-    const updatedList: ShoppingList = {
-      ...list,
-      ...updates,
-      updatedAt: new Date(),
-    };
-    this.shoppingLists.set(id, updatedList);
-    return updatedList;
+    const [updatedList] = await db
+      .update(shoppingLists)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(shoppingLists.id, id))
+      .returning();
+    return updatedList || undefined;
   }
 
   async deleteShoppingList(id: number): Promise<boolean> {
-    // Also delete all items in this list
-    const items = Array.from(this.listItems.values()).filter(item => item.listId === id);
-    items.forEach(item => this.listItems.delete(item.id));
+    // First delete all items in this list
+    await db.delete(listItems).where(eq(listItems.listId, id));
     
-    return this.shoppingLists.delete(id);
+    // Then delete the list
+    const result = await db.delete(shoppingLists).where(eq(shoppingLists.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 
   // List item methods
   async getListItems(listId: number): Promise<ListItem[]> {
-    return Array.from(this.listItems.values()).filter(item => item.listId === listId);
+    return await db.select().from(listItems).where(eq(listItems.listId, listId));
   }
 
   async getListItem(id: number): Promise<ListItem | undefined> {
-    return this.listItems.get(id);
+    const [item] = await db.select().from(listItems).where(eq(listItems.id, id));
+    return item || undefined;
   }
 
   async createListItem(insertItem: InsertListItem): Promise<ListItem> {
-    const id = this.currentItemId++;
-    const item: ListItem = {
-      ...insertItem,
-      id,
-      updatedAt: new Date(),
-    };
-    this.listItems.set(id, item);
+    const [item] = await db
+      .insert(listItems)
+      .values({
+        ...insertItem,
+        status: insertItem.status || "pending",
+        quantity: insertItem.quantity || 1,
+        estimatedPrice: insertItem.estimatedPrice || null,
+        actualPrice: insertItem.actualPrice || null,
+        notes: insertItem.notes || null,
+      })
+      .returning();
     return item;
   }
 
   async updateListItem(id: number, updates: Partial<ListItem>): Promise<ListItem | undefined> {
-    const item = this.listItems.get(id);
-    if (!item) return undefined;
-
-    const updatedItem: ListItem = {
-      ...item,
-      ...updates,
-      updatedAt: new Date(),
-    };
-    this.listItems.set(id, updatedItem);
-    return updatedItem;
+    const [updatedItem] = await db
+      .update(listItems)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(listItems.id, id))
+      .returning();
+    return updatedItem || undefined;
   }
 
   async deleteListItem(id: number): Promise<boolean> {
-    return this.listItems.delete(id);
+    const result = await db.delete(listItems).where(eq(listItems.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Admin methods
   async getActiveShoppingLists(): Promise<ShoppingList[]> {
-    return Array.from(this.shoppingLists.values()).filter(list => 
-      list.status === "active" || list.status === "processing"
-    );
+    return await db
+      .select()
+      .from(shoppingLists)
+      .where(eq(shoppingLists.status, "active"))
+      .union(
+        db.select().from(shoppingLists).where(eq(shoppingLists.status, "processing"))
+      );
   }
 
   async getShoppingListsWithItems(): Promise<(ShoppingList & { items: ListItem[] })[]> {
-    const lists = Array.from(this.shoppingLists.values());
-    return lists.map(list => ({
-      ...list,
-      items: Array.from(this.listItems.values()).filter(item => item.listId === list.id)
-    }));
+    const lists = await db.select().from(shoppingLists);
+    const result: (ShoppingList & { items: ListItem[] })[] = [];
+    
+    for (const list of lists) {
+      const items = await db.select().from(listItems).where(eq(listItems.listId, list.id));
+      result.push({ ...list, items });
+    }
+    
+    return result;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
