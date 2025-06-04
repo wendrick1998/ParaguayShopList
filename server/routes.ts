@@ -103,7 +103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/me", requireAuth, async (req, res) => {
     try {
-      const user = await storage.getUser(req.session.userId);
+      const user = await storage.getUser(req.session.userId!);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -118,7 +118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Shopping lists routes
   app.get("/api/shopping-lists", requireAuth, async (req, res) => {
     try {
-      const lists = await storage.getShoppingLists(req.session.userId);
+      const lists = await storage.getShoppingLists(req.session.userId!);
       res.json(lists);
     } catch (error) {
       res.status(500).json({ message: "Failed to get shopping lists" });
