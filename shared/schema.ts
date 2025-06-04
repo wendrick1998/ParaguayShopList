@@ -18,7 +18,7 @@ export const shoppingLists = pgTable("shopping_lists", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
-  userId: integer("user_id").references(() => users.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
   status: text("status", { enum: ["draft", "active", "processing", "completed"] }).default("draft").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -36,8 +36,8 @@ export const listItems = pgTable("list_items", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
+// Replit Auth user upsert schema
+export const upsertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
 });
 
@@ -52,7 +52,7 @@ export const insertListItemSchema = createInsertSchema(listItems).omit({
   updatedAt: true,
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpsertUser = z.infer<typeof upsertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertShoppingList = z.infer<typeof insertShoppingListSchema>;
 export type ShoppingList = typeof shoppingLists.$inferSelect;

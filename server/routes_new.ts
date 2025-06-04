@@ -21,16 +21,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Shopping lists routes
-  app.get("/api/shopping-lists", requireAuth, async (req, res) => {
+  app.get("/api/shopping-lists", isAuthenticated, async (req: any, res) => {
     try {
-      const lists = await storage.getShoppingLists(req.session.userId!);
+      const userId = req.user.claims.sub;
+      const lists = await storage.getShoppingLists(userId);
       res.json(lists);
     } catch (error) {
       res.status(500).json({ message: "Failed to get shopping lists" });
     }
   });
 
-  app.get("/api/shopping-lists/:id", requireAuth, async (req, res) => {
+  app.get("/api/shopping-lists/:id", isAuthenticated, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
       const list = await storage.getShoppingList(id);
@@ -40,8 +41,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if user owns the list or is admin
-      const user = await storage.getUser(req.session.userId);
-      if (list.userId !== req.session.userId && !user?.isAdmin) {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (list.userId !== userId && !user?.isAdmin) {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -52,11 +54,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/shopping-lists", requireAuth, async (req, res) => {
+  app.post("/api/shopping-lists", isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
       const listData = insertShoppingListSchema.parse({
         ...req.body,
-        userId: req.session.userId,
+        userId,
       });
       
       const list = await storage.createShoppingList(listData);
@@ -66,7 +69,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/shopping-lists/:id", requireAuth, async (req, res) => {
+  app.patch("/api/shopping-lists/:id", isAuthenticated, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
       const list = await storage.getShoppingList(id);
@@ -76,8 +79,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if user owns the list or is admin
-      const user = await storage.getUser(req.session.userId);
-      if (list.userId !== req.session.userId && !user?.isAdmin) {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (list.userId !== userId && !user?.isAdmin) {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -88,7 +92,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/shopping-lists/:id", requireAuth, async (req, res) => {
+  app.delete("/api/shopping-lists/:id", isAuthenticated, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
       const list = await storage.getShoppingList(id);
@@ -97,7 +101,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Shopping list not found" });
       }
 
-      if (list.userId !== req.session.userId) {
+      const userId = req.user.claims.sub;
+      if (list.userId !== userId) {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -113,7 +118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // List items routes
-  app.post("/api/shopping-lists/:listId/items", requireAuth, async (req, res) => {
+  app.post("/api/shopping-lists/:listId/items", isAuthenticated, async (req: any, res) => {
     try {
       const listId = parseInt(req.params.listId);
       const list = await storage.getShoppingList(listId);
@@ -122,7 +127,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Shopping list not found" });
       }
 
-      if (list.userId !== req.session.userId) {
+      const userId = req.user.claims.sub;
+      if (list.userId !== userId) {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -138,7 +144,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/list-items/:id", requireAuth, async (req, res) => {
+  app.patch("/api/list-items/:id", isAuthenticated, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
       const item = await storage.getListItem(id);
@@ -148,10 +154,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const list = await storage.getShoppingList(item.listId);
-      const user = await storage.getUser(req.session.userId);
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
       
       // Check if user owns the list or is admin
-      if (list?.userId !== req.session.userId && !user?.isAdmin) {
+      if (list?.userId !== userId && !user?.isAdmin) {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -162,7 +169,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/list-items/:id", requireAuth, async (req, res) => {
+  app.delete("/api/list-items/:id", isAuthenticated, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
       const item = await storage.getListItem(id);
@@ -172,7 +179,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const list = await storage.getShoppingList(item.listId);
-      if (list?.userId !== req.session.userId) {
+      const userId = req.user.claims.sub;
+      if (list?.userId !== userId) {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -186,6 +194,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to delete item" });
     }
   });
+
+  // Admin middleware
+  const requireAdmin = async (req: any, res: any, next: any) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    const userId = req.user.claims.sub;
+    const user = await storage.getUser(userId);
+    if (!user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    next();
+  };
 
   // Admin routes
   app.get("/api/admin/shopping-lists", requireAdmin, async (req, res) => {

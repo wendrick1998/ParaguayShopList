@@ -3,23 +3,22 @@ import {
   shoppingLists,
   listItems,
   type User,
-  type InsertUser,
+  type UpsertUser,
   type ShoppingList,
   type InsertShoppingList,
   type ListItem,
   type InsertListItem,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 
 export interface IStorage {
-  // User methods
-  getUser(id: number): Promise<User | undefined>;
-  getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  // User methods for Replit Auth
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
   
   // Shopping list methods
-  getShoppingLists(userId: number): Promise<ShoppingList[]>;
+  getShoppingLists(userId: string): Promise<ShoppingList[]>;
   getShoppingList(id: number): Promise<ShoppingList | undefined>;
   createShoppingList(list: InsertShoppingList): Promise<ShoppingList>;
   updateShoppingList(id: number, updates: Partial<ShoppingList>): Promise<ShoppingList | undefined>;
@@ -38,30 +37,29 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  // User methods
-  async getUser(id: number): Promise<User | undefined> {
+  // User methods for Replit Auth
+  async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
   }
 
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user || undefined;
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async upsertUser(userData: UpsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
-      .values({
-        ...insertUser,
-        isAdmin: insertUser.isAdmin || false,
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
       })
       .returning();
     return user;
   }
 
   // Shopping list methods
-  async getShoppingLists(userId: number): Promise<ShoppingList[]> {
+  async getShoppingLists(userId: string): Promise<ShoppingList[]> {
     return await db.select().from(shoppingLists).where(eq(shoppingLists.userId, userId));
   }
 
