@@ -98,7 +98,7 @@ export class DatabaseStorage implements IStorage {
     
     // Then delete the list
     const result = await db.delete(shoppingLists).where(eq(shoppingLists.id, id));
-    return (result.rowCount ?? 0) > 0;
+    return result.length > 0;
   }
 
   // List item methods
@@ -140,7 +140,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteListItem(id: number): Promise<boolean> {
     const result = await db.delete(listItems).where(eq(listItems.id, id));
-    return (result.rowCount ?? 0) > 0;
+    return result.length > 0;
   }
 
   // Admin methods
