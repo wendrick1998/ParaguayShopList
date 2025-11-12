@@ -7,6 +7,10 @@ import EstoquePage from './pages/EstoquePage'
 import VendasPage from './pages/VendasPage'
 import PDVPage from './pages/PDVPage'
 import CaixaPage from './pages/CaixaPage'
+import IPhonesPage from './pages/iPhonesPage'
+import LeiloesPage from './pages/LeiloesPage'
+import EnviosPage from './pages/EnviosPage'
+import CambioPage from './pages/CambioPage'
 import { ToastContainer } from './components/ui'
 import { useToastStore } from './store/toastStore'
 
@@ -21,6 +25,10 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/iphones" element={<IPhonesPage />} />
+        <Route path="/leiloes" element={<LeiloesPage />} />
+        <Route path="/envios" element={<EnviosPage />} />
+        <Route path="/cambio" element={<CambioPage />} />
         <Route path="/produtos" element={<ProdutosPage />} />
         <Route path="/estoque" element={<EstoquePage />} />
         <Route path="/vendas" element={<VendasPage />} />

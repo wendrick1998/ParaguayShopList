@@ -2,6 +2,10 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import {
   LayoutDashboard,
+  Smartphone,
+  Gavel,
+  Truck,
+  DollarSign,
   Package,
   PackageCheck,
   ShoppingCart,
@@ -26,6 +30,10 @@ export default function Layout({ children }: LayoutProps) {
 
   const menuItems = [
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/iphones', label: 'iPhones 📱', icon: Smartphone },
+    { path: '/leiloes', label: 'Leilões 🔨', icon: Gavel },
+    { path: '/envios', label: 'Envios 🚚', icon: Truck },
+    { path: '/cambio', label: 'Câmbio 💱', icon: DollarSign },
     { path: '/pdv', label: 'PDV (F2)', icon: CreditCard },
     { path: '/produtos', label: 'Produtos', icon: Package },
     { path: '/estoque', label: 'Estoque', icon: PackageCheck },
