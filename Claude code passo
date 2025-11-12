@@ -1,0 +1,848 @@
+# GUIA PASSO A PASSO - CONSTRUIR SEC+ COM CLAUDE CODE
+## Como usar Claude AI + Lovable/WindSurf para build fullstack em 6 semanas
+
+---
+
+## 📱 PRÉ-REQUISITOS (Confirme que tem)
+
+- ✅ VS Code instalado
+- ✅ Node.js v18+ instalado (`node --version`)
+- ✅ Git instalado (`git --version`)
+- ✅ Conta Supabase (supabase.com)
+- ✅ Conta Vercel (vercel.com)
+- ✅ Conta Railway (railway.app)
+- ✅ WindSurf ou Claude Code plugin instalado
+- ✅ Terminal/Git Bash acessível
+
+---
+
+## ⚡ PASSO 1: SETUP INICIAL COM CLAUDE CODE (30 min)
+
+### 1.1 Abrir VS Code + Claude Code
+
+```bash
+# 1. Abrir VS Code
+code sec-plus
+
+# 2. Abrir Claude Code (Cmd+Shift+P no Mac, Ctrl+Shift+P no Windows)
+# Digitar: "Claude Code: New Session"
+```
+
+### 1.2 Prompt INICIAL para Claude Code
+
+Copiar e colar esto exactamente no Claude Code:
+
+```
+Você é um expert fullstack Node.js + React. Vou construir um sistema de gestão de estoque e vendas chamado SEC+.
+
+Crie uma estrutura inicial de projeto com:
+
+FRONTEND (React + TypeScript + TailwindCSS):
+- Pasta: /frontend
+- Vite como build tool
+- React Router para navegação
+- Zustand para state management
+- Axios para API calls
+- Estrutura de pastas: pages, components, store, utils
+
+BACKEND (Node.js + Express + TypeScript):
+- Pasta: /backend
+- Express com CORS
+- Prisma ORM
+- PostgreSQL
+- JWT authentication
+- Estrutura de pastas: routes, middleware, prisma
+
+DATABASE:
+- PostgreSQL schema com tabelas: usuarios, loja, produtos, estoques, vendas, itens_venda, movimentacoes_estoque, caixa
+
+ARQUIVOS CONFIG:
+- .gitignore
+- .env.example (both frontend e backend)
+- package.json (both)
+- tsconfig.json (both)
+
+Gere TODA a estrutura. Não execute npm install, só crie os arquivos.
+
+Responda em português do Brasil.
+```
+
+### 1.3 Claude Code vai gerar:
+
+Ele vai criar a estrutura inicial. Aqui está o que vai acontecer:
+
+```
+✅ Estrutura de pasta criada
+✅ package.json gerado
+✅ tsconfig.json configurado
+✅ Prisma schema preparado
+✅ .gitignore criado
+```
+
+**Ação sua:** Copiar todos os arquivos para seu computador em `/sec-plus`
+
+---
+
+## 🔧 PASSO 2: SETUP INFRAESTRUTURA (1h)
+
+### 2.1 Criar Supabase Database
+
+```bash
+# 1. Ir em supabase.com
+# 2. Sign up / Login
+# 3. New Project → Database name: "sec_plus"
+# 4. Copiar CONNECTION STRING (format: postgresql://...)
+# 5. Salvar em .env.backend
+```
+
+**Em `/backend/.env`:**
+```
+DATABASE_URL="postgresql://user:password@db.supabase.co:5432/postgres"
+JWT_SECRET="seu_jwt_super_secreto_aqui_123456"
+PORT=3000
+NODE_ENV=development
+```
+
+### 2.2 Setup Git & GitHub
+
+```bash
+cd /sec-plus
+git init
+git add .
+git commit -m "initial: SEC+ fullstack skeleton"
+git branch -M main
+
+# Ir em github.com, criar novo repo "sec-plus"
+# Copiar comandos e rodar:
+git remote add origin https://github.com/seu-usuario/sec-plus.git
+git push -u origin main
+```
+
+### 2.3 Setup Local Packages
+
+```bash
+# BACKEND
+cd backend
+npm install
+npm install -D typescript @types/node ts-node nodemon
+
+# FRONTEND
+cd ../frontend
+npm install
+npm install -D typescript
+```
+
+**Verificar:**
+```bash
+# Terminal backend: deve rodar sem erros
+npm run dev
+
+# Terminal frontend: deve rodar sem erros
+npm run dev
+```
+
+---
+
+## 🗄️ PASSO 3: DATABASE & PRISMA (45 min)
+
+### 3.1 Prompt Claude Code: Prisma Setup
+
+```
+No arquivo /backend/prisma/schema.prisma, crie o schema PostgreSQL completo com:
+
+Tabelas:
+- usuarios (id, email, senha_hash, nome, perfil, ativo, criado_em)
+- lojas (id, nome, endereco, telefone, ativa)
+- produtos (id, codigo_barras UNIQUE, descricao, categoria, preco_custo, preco_venda, estoque_min/max, ativo)
+- estoques (id, loja_id, produto_id, quantidade_atual, ultima_atualizacao) - UNIQUE(loja_id, produto_id)
+- vendas (id, loja_id, usuario_id, data_venda, subtotal, desconto_total, total, forma_pagamento)
+- itens_venda (id, venda_id, produto_id, quantidade, preco_unitario, desconto_item, subtotal)
+- movimentacoes_estoque (id, loja_id, produto_id, tipo, quantidade, documento, usuario_id, criado_em)
+- caixa (id, loja_id, usuario_id, data_abertura, saldo_inicial, sangrias, reforcos, data_fechamento, total_esperado, total_conferido, diferenca)
+
+Adicione:
+- Índices para performance (codigo_barras, datas)
+- Relacionamentos corretos entre tabelas
+- Timestamps automáticos (createdAt, updatedAt)
+- Enums para: perfil (vendedor, gestor, gerente, admin), forma_pagamento (dinheiro, cartao, pix, cheque), tipo_movimento (entrada, saida, ajuste, transferencia)
+
+Gere o schema.prisma completo pronto para rodar.
+```
+
+### 3.2 Aplicar Schema
+
+```bash
+cd backend
+
+# Gerar Prisma Client
+npx prisma generate
+
+# Criar migrations
+npx prisma migrate dev --name init
+
+# Verificar no Prisma Studio
+npx prisma studio
+# Abre em http://localhost:5555
+```
+
+**Verificar:** Você deve ver todas as tabelas no Prisma Studio
+
+### 3.3 Inserir Usuário Admin de Teste
+
+**Prompt Claude Code:**
+
+```
+Crie um seed.ts no /backend/prisma/seed.ts que:
+- Conecta ao Supabase
+- Cria usuário admin com:
+  email: "wendrick@outlet.com"
+  senha: "teste123" (hash com bcrypt)
+  nome: "Wendrick Admin"
+  perfil: "admin"
+- Cria uma loja padrão: "Loja Cidade Nova"
+- Cria 5 produtos de teste (camiseta, calça, meia, etc)
+
+Use bcryptjs para hash. Exporte por npx prisma db seed
+```
+
+**Rodar seed:**
+```bash
+npm install bcryptjs
+npx prisma db seed
+```
+
+**Verificar no Prisma Studio:** Deve ter usuario + loja + produtos
+
+---
+
+## 🔐 PASSO 4: AUTENTICAÇÃO (JWT + Login) - 1h
+
+### 4.1 Prompt Claude Code: Auth Backend
+
+```
+Crie os seguintes arquivos em /backend/src:
+
+1. /backend/src/middleware/auth.ts:
+   - Middleware que valida JWT token
+   - Extrai userId e role do token
+   - Retorna 401 se token inválido
+   - Injeta userId em req.userId
+
+2. /backend/src/routes/auth.ts:
+   - POST /auth/login { email, senha } → retorna { token, user }
+   - GET /auth/me (protegido) → retorna usuario logado
+   - POST /auth/logout (limpa token client-side apenas)
+   - Usar JWT com expiration 7 dias
+   - Usar bcrypt para comparar senha
+
+3. /backend/src/server.ts:
+   - Setup Express
+   - CORS habilitado (origin: http://localhost:5173)
+   - Body parser JSON
+   - Rotas de auth
+   - Error handler middleware
+   - Rodar em PORT 3000
+
+Use express, cors, dotenv, jsonwebtoken, bcryptjs, prisma
+```
+
+### 4.2 Testar Auth Backend
+
+```bash
+# Terminal 1: Backend rodando
+cd backend && npm run dev
+
+# Terminal 2: Testar com curl
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"wendrick@outlet.com","senha":"teste123"}'
+
+# Deve retornar:
+# {"token":"eyJhbGc...","user":{"id":1,"email":"...","nome":"Wendrick","perfil":"admin"}}
+```
+
+---
+
+## 🎨 PASSO 5: FRONTEND - AUTH + LAYOUT (1h 30min)
+
+### 5.1 Prompt Claude Code: Frontend Setup
+
+```
+No /frontend/src, crie:
+
+1. /frontend/src/utils/api.ts:
+   - Axios instance com baseURL: http://localhost:3000
+   - Interceptor que adiciona Authorization header com token
+   - Interceptor que trata erro 401 (limpa localStorage, redireciona /login)
+
+2. /frontend/src/store/auth.ts (Zustand store):
+   - State: user, loading, error
+   - Actions: login(email, senha), logout(), checkAuth()
+   - Salva token em localStorage
+   - Carrega usuario ao iniciar app
+
+3. /frontend/src/pages/Login.tsx:
+   - Form com email + senha
+   - Botão "Entrar"
+   - Mostrar erro se falhar
+   - Redirect para / se login sucesso
+   - Design minimalista com TailwindCSS
+
+4. /frontend/src/components/Layout.tsx:
+   - Sidebar com navegação
+   - Menu: 🏠 Dashboard | 💳 PDV | 📦 Estoque
+   - Header com nome do usuário
+   - Botão Logout
+   - Main area para content
+   - Responsive (mobile friendly)
+
+5. /frontend/src/pages/Dashboard.tsx:
+   - Placeholder: "Dashboard - Em construção"
+   - Cards KPI: Vendas Hoje, Estoque, Alerta
+
+6. /frontend/src/App.tsx:
+   - Routes com React Router
+   - Protected routes (se !user → redirect login)
+   - Layout wrapper
+
+Use React Router v6, TailwindCSS, React Icons, Zustand
+```
+
+### 5.2 Testar Frontend
+
+```bash
+cd frontend && npm run dev
+# Abrir http://localhost:5173
+
+# Fazer login com:
+# Email: wendrick@outlet.com
+# Senha: teste123
+
+# Se funcionar: redirect para Dashboard ✅
+```
+
+---
+
+## 💳 PASSO 6: MÓDULO PDV (Ponto de Venda) - 2h
+
+### 6.1 Prompt Claude Code: PDV Backend APIs
+
+```
+Crie em /backend/src/routes/vendas.ts:
+
+1. GET /produtos?search=termo&categoria=id
+   - Busca de produtos (fuzzy search)
+   - Filtro por categoria
+   - Retorna: id, codigo_barras, descricao, preco_venda, estoque_atual
+
+2. GET /produtos/:id
+   - Detalhe do produto
+
+3. POST /vendas
+   - Body: { lojaId, usuarioId, itens: [{produtoId, quantidade, desconto}], formaPagamento }
+   - Validar: estoque suficiente, valores válidos
+   - Criar venda DENTRO de uma transação Prisma
+   - Atualizar estoque automaticamente
+   - Retornar: vendaId, total, recibo
+
+4. GET /vendas?data=2025-11-11&lojaId=1
+   - Listar vendas (com filtro data)
+   - Retorna: vendas com itens
+
+5. POST /caixa/abrir
+   - Body: { lojaId, usuarioId, saldoInicial }
+   - Cria registro de caixa
+
+6. POST /caixa/fechar
+   - Body: { caixaId, totalConferido }
+   - Fecha caixa, calcula diferença
+
+Usar transações Prisma para garantir ACID (tudo ou nada)
+```
+
+### 6.2 Prompt Claude Code: PDV Frontend
+
+```
+Crie em /frontend/src/pages/PDV.tsx:
+
+Componente com:
+1. Busca de produto:
+   - Input "Buscar por código ou nome"
+   - Autocomplete/dropdown com resultados
+   - Click para adicionar ao carrinho
+
+2. Carrinho:
+   - Tabela: Produto | Qtd | Unit | Subtotal
+   - Inputs para ajustar Qtd
+   - Botão X para remover item
+
+3. Resumo:
+   - Subtotal: R$ 0.00
+   - Desconto: -0% (input)
+   - Total: R$ 0.00
+
+4. Pagamento:
+   - Buttons: 💵 Dinheiro | 💳 Cartão | 📱 PIX | 📄 Cheque
+   - Se Dinheiro: input "Valor pago" → calcula troco
+   - Se PIX: gera QR code (mock)
+
+5. Ações:
+   - Botão "Finalizar Venda"
+   - Botão "Limpar Carrinho"
+   - Mostrar sucesso/erro após venda
+
+State com Zustand (carrinho, totais)
+Chamadas API com Axios (getProdutos, criarVenda)
+UI minimalista com TailwindCSS
+```
+
+---
+
+## 📦 PASSO 7: MÓDULO ESTOQUE - 1h 30min
+
+### 7.1 Prompt Claude Code: Estoque Backend
+
+```
+Crie em /backend/src/routes/estoque.ts:
+
+1. GET /estoque?lojaId=1
+   - Listar produtos com estoque
+   - Retorna: produto, qtd_atual, qtd_min, qtd_max, alerta (boolean)
+   - Ordenado por produto_id
+
+2. GET /estoque/:produtoId?lojaId=1
+   - Detalhe estoque
+   - Histórico últimas 3 movimentações
+
+3. POST /estoque/ajuste
+   - Body: { lojaId, produtoId, tipo, quantidade, motivo }
+   - tipo: 'entrada' | 'saida' | 'ajuste'
+   - Atualizar tabela estoques
+   - Criar log em movimentacoes_estoque
+
+4. POST /estoque/transferencia
+   - Body: { lojaId_origem, lojaId_destino, produtoId, quantidade }
+   - Transação: sai origem, entra destino
+
+5. GET /estoque/movimentacoes?lojaId=1&dataInicio=2025-11-01
+   - Histórico de movimentações
+   - Filtro por data, tipo
+```
+
+### 7.2 Prompt Claude Code: Estoque Frontend
+
+```
+Crie em /frontend/src/pages/Estoque.tsx:
+
+1. Filtros:
+   - Dropdown: [Todos] [Baixo Estoque] [Categoria]
+   - Busca: input "Buscar produto"
+
+2. Tabela:
+   - Código | Produto | Qtd Atual | Mín | Máx | Ação
+   - Linha com alerta visual (🟢 OK ou 🔴 BAIXO)
+   - Click em linha → abre painel de detalhes
+
+3. Painel Detalhes (side ou modal):
+   - Histórico últimas 3 movimentações
+   - Botões: [➕ Entrada] [➖ Saída] [↔️ Transferência]
+
+4. Modal Ajuste:
+   - Tipo: dropdown (entrada/saída/ajuste)
+   - Quantidade: input
+   - Motivo: dropdown ou textarea
+   - Botão: [Confirmar]
+
+5. Alertas:
+   - "X produtos com estoque baixo"
+   - Badge com número
+
+UI minimalista. Estado com Zustand. API com Axios.
+```
+
+---
+
+## 📊 PASSO 8: DASHBOARD & RELATÓRIOS - 1h
+
+### 8.1 Prompt Claude Code: Dashboard Backend
+
+```
+Crie em /backend/src/routes/dashboard.ts:
+
+1. GET /dashboard/resumo?lojaId=1&data=2025-11-11
+   - totalVendas (soma do dia)
+   - ticket_medio
+   - produtos_vendidos (top 5)
+   - forma_pagamento_resumo (dinheiro %, cartao %)
+
+2. GET /dashboard/grafico?lojaId=1&periodo=7dias
+   - Últimos 7 dias com vendas
+   - Retorna: [{ data, total }, ...]
+
+3. GET /relatorio/vendas?lojaId=1&dataInicio=2025-11-01&dataFim=2025-11-11
+   - Detalhado de vendas
+   - Retorna: vendas com itens
+
+4. GET /relatorio/estoque?lojaId=1
+   - Lista todos produtos com qtd e valor total
+```
+
+### 8.2 Prompt Claude Code: Dashboard Frontend
+
+```
+Crie em /frontend/src/pages/Dashboard.tsx:
+
+1. Cards KPI (no topo):
+   - 📊 Vendas Hoje: R$ 2.567,00 (↑12% vs ontem)
+   - 📦 Estoque: 2.847 itens (↓15 baixos)
+   - 💰 Ticket Médio: R$ 125,30
+
+2. Gráfico:
+   - Últimos 7 dias de vendas
+   - Usando Recharts (LineChart)
+
+3. Tabela Últimas Vendas:
+   - Hora | Operador | Produto | Qtd | Total
+   - 5 últimas vendas
+
+4. Botões rápidos:
+   - [💳 Vender Agora]
+   - [📦 Gerenciar Estoque]
+   - [📊 Ver Relatórios]
+
+Use Recharts para gráficos. Zustand para estado. Axios para API.
+```
+
+---
+
+## 🚀 PASSO 9: DEPLOY (PRODUÇÃO) - 1h 30min
+
+### 9.1 Prompt Claude Code: Prepare para Deploy
+
+```
+Crie os seguintes arquivos:
+
+1. /backend/.env.production:
+   DATABASE_URL="...seu supabase..."
+   JWT_SECRET="...seu jwt secret..."
+   NODE_ENV="production"
+   PORT="3000"
+   CORS_ORIGIN="https://seu-app.vercel.app"
+
+2. /backend/package.json:
+   - script "build": "tsc"
+   - script "start": "node dist/server.js"
+
+3. /frontend/.env.production:
+   VITE_API_URL="https://seu-api.railway.app"
+
+4. Criar railway.json em /backend:
+   [railway deploy config]
+
+5. Criar vercel.json em /frontend:
+   [vercel deploy config]
+```
+
+### 9.2 Deploy Frontend (Vercel)
+
+```bash
+cd frontend
+
+# Build local
+npm run build
+
+# Conectar Vercel
+npm i -g vercel
+vercel
+
+# Seguir wizard:
+# ✅ Confirm projeto
+# ✅ Framework: Vite
+# ✅ Conecta a GitHub
+# ✅ Auto-deploy em cada push
+
+# Depois só fazer git push
+```
+
+**Resultado:** App live em `https://seu-app.vercel.app`
+
+### 9.3 Deploy Backend (Railway)
+
+```bash
+cd backend
+
+# Conectar Railway
+railway link
+
+# Deploy
+railway up
+
+# Copiar URL gerada (ex: https://sec-plus-api.railway.app)
+# Adicionar em CORS do backend
+# Adicionar em frontend .env.production
+```
+
+**Resultado:** API live em `https://seu-app-api.railway.app`
+
+### 9.4 Testar em Produção
+
+```bash
+# Abrir https://seu-app.vercel.app
+# Login com wendrick@outlet.com / teste123
+# Fazer venda de teste
+# Verificar estoque atualizado
+# Checar Dashboard com dados reais
+```
+
+---
+
+## 🔄 PASSO 10: OFFLINE MODE & SINCRONIZAÇÃO (2h)
+
+### 10.1 Prompt Claude Code: Service Worker
+
+```
+Crie em /frontend/public/sw.js:
+
+Service Worker que:
+1. Cacheia assets (CSS, JS, images)
+2. Intercepta requisições /api/*
+3. Se online: faz requisição normal, salva resposta em cache
+4. Se offline: retorna do cache
+5. Quando volta online: sincroniza vendas pendentes
+
+Vendas offline:
+- Salva em IndexedDB: tabela "vendas_pendentes"
+- Quando volta online: envia para API
+- Aguarda confirmação antes de limpar local
+
+Use IndexedDB para armazenar vendas localmente.
+```
+
+### 10.2 Prompt Claude Code: Sync Manager
+
+```
+Crie em /frontend/src/utils/syncManager.ts:
+
+Gerenciador que:
+1. Detecta mudança online/offline
+2. Fila de requisições pendentes
+3. Ao voltar online: processa fila em ordem
+4. Notifica usuário: "🟡 Sincronizando..." → "🟢 Sincronizado"
+
+Use listeners: window.addEventListener('online'), ('offline')
+```
+
+---
+
+## 📋 PASSO 11: TESTES & VALIDAÇÕES (1h)
+
+### 11.1 Prompt Claude Code: Validações
+
+```
+Adicione em Backend + Frontend:
+
+Validações:
+1. Email válido (formato)
+2. Senha (mín 8 caracteres)
+3. Quantidade > 0
+4. Estoque suficiente antes venda
+5. Total venda > 0
+6. Código barras único
+7. Preço > 0
+
+Use Zod (schema validation) tanto frontend quanto backend
+```
+
+### 11.2 Testes Manuais (Checklist)
+
+```
+✅ Login com credenciais corretas → OK
+✅ Login com senha errada → Erro
+❌ Acessar /pdv sem autenticação → Redireciona login
+✅ Vender 1 produto → Estoque atualiza
+✅ Estoque fica negativo? → Bloqueia venda
+✅ Fechar caixa → Calcula diferença corretamente
+✅ Modo offline: vender sem internet
+✅ Volta online: venda sincroniza
+✅ Dashboard mostra dados corretos
+✅ Relatórios exportam em PDF (futuro)
+```
+
+---
+
+## 🎯 PASSO 12: DOCUMENTAÇÃO & GIT (30 min)
+
+### 12.1 Criar README.md
+
+```markdown
+# SEC+ - Sistema de Gestão de Estoque e Vendas
+
+## Stack
+- Frontend: React + TypeScript + TailwindCSS
+- Backend: Node.js + Express + PostgreSQL
+- Database: Supabase
+- Deploy: Vercel + Railway
+
+## Como rodar localmente
+
+### Backend
+\`\`\`bash
+cd backend
+npm install
+npx prisma migrate dev
+npm run dev
+\`\`\`
+
+### Frontend
+\`\`\`bash
+cd frontend
+npm install
+npm run dev
+\`\`\`
+
+## Deploy
+- Frontend: Vercel (auto-deploy em git push)
+- Backend: Railway (auto-deploy em git push)
+
+## Credenciais Teste
+- Email: wendrick@outlet.com
+- Senha: teste123
+```
+
+### 12.2 Git Commits
+
+```bash
+git add .
+git commit -m "feat: complete PDV + Estoque + Dashboard MVP"
+git push
+
+# Railway + Vercel auto-deploiam aqui
+```
+
+---
+
+## 📅 TIMELINE REALISTA (Com Claude Code)
+
+```
+Semana 1 (40h):
+├─ Dia 1: Setup + estrutura (Passo 1-3) = 3h
+├─ Dia 2: Autenticação (Passo 4) = 2h
+├─ Dia 3: Frontend auth + Layout (Passo 5) = 3h
+├─ Dia 4: PDV backend (Passo 6a) = 2h
+├─ Dia 5: PDV frontend (Passo 6b) = 3h
+├─ Semana: Estoque (Passo 7) = 2h
+├─ Semana: Dashboard (Passo 8) = 2h
+└─ Semana: Deploy (Passo 9) = 1h
+
+Total: ~18h de desenvolvimento
+Tempo com Claude Code: 80% mais rápido vs manual
+
+Semana 2-3: Refinamentos, offline mode, testes
+```
+
+---
+
+## 🎓 COMANDOS CLAUDE CODE RESUMIDOS
+
+```
+1. "Gere estrutura inicial completa"
+2. "Crie Prisma schema com todas tabelas"
+3. "Faça auth backend (login + JWT)"
+4. "Crie auth frontend (login page + store)"
+5. "Implemente PDV backend (vendas + estoque)"
+6. "Implemente PDV frontend (carrinho + pagamento)"
+7. "Crie estoque backend (CRUD + movimentações)"
+8. "Crie estoque frontend (tabela + ajustes)"
+9. "Implemente Dashboard (KPI + gráficos)"
+10. "Configure deploy (Vercel + Railway)"
+11. "Adicione offline mode (IndexedDB + sync)"
+12. "Crie testes e validações"
+```
+
+---
+
+## 💡 DICAS PRO COM CLAUDE CODE
+
+### ✅ DOs
+- Pedir um arquivo/componente por vez
+- Ser específico: "React + TypeScript + Tailwind"
+- Incluir requisitos: "Usar Prisma para DB"
+- Testar após cada Passo
+- Fazer commits frequentes
+
+### ❌ DON'Ts
+- Não pedir "faça o sistema todo"
+- Não mudar spec enquanto construindo
+- Não fazer deploy sem testar local
+- Não esquecer de `.gitignore` (secrets!)
+- Não misturar múltiplas features em um prompt
+
+### 🔄 Iteração Rápida
+Se Claude gerar algo que não quer:
+```
+"Refaça este arquivo com:
+ - Sem animações
+ - Cores mais simples
+ - Sem campos de X"
+```
+
+---
+
+## 🚨 TROUBLESHOOTING COM CLAUDE CODE
+
+### Problema: "Código não compila"
+**Solução:** 
+```
+Prompt: "Há erros TypeScript aqui [cola o erro]. Corrija mantendo a lógica"
+```
+
+### Problema: "Teste falha"
+**Solução:**
+```
+Prompt: "Este teste não passa [cola erro]. Debug e corrija"
+```
+
+### Problema: "Performance lenta"
+**Solução:**
+```
+Prompt: "Esta query é lenta. Otimize adicionando índices Prisma"
+```
+
+### Problema: "Não sei como continuar"
+**Solução:**
+```
+Prompt: "Qual é o próximo passo para implementar X? Descreva a arquitetura"
+```
+
+---
+
+## 📞 RESUMO EXECUTIVO
+
+Com Claude Code você vai:
+- ✅ **50% mais rápido** que código manual
+- ✅ **Código profissional** (não toy code)
+- ✅ **Stack moderno** (React, Node, PostgreSQL)
+- ✅ **Pronto para produção** (Vercel + Railway)
+- ✅ **Suporte bom** (Claude entende contexto bem)
+
+**Tempo total: 6 semanas de desenvolvimento** = MVP completo
+
+---
+
+## 🚀 COMEÇAR AGORA
+
+1. Abrir VS Code
+2. Instalar extensão Claude Code
+3. Criar pasta `sec-plus`
+4. Primeira prompt: "Crie estrutura inicial do SEC+ system"
+5. Deixar Claude gerar
+6. Testar localmente
+7. Fazer git push
+8. Deploy automático
+9. Próximo Passo: nova prompt
+
+**Vamo começar! 💪**
+
+---
+
+FIM DO GUIA
