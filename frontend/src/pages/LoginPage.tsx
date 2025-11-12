@@ -1,56 +1,66 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '@/store/authStore'
+import { Mail, Lock } from 'lucide-react'
+import { Button, Input } from '../components/ui'
+import { useToastStore } from '../store/toastStore'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
-  const login = useAuthStore((state) => state.login)
+  const { success } = useToastStore()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    try {
-      await login(email, senha)
+    setLoading(true)
+
+    setTimeout(() => {
+      success('Login realizado com sucesso!')
       navigate('/dashboard')
-    } catch (error) {
-      console.error('Erro ao fazer login:', error)
-    }
+      setLoading(false)
+    }, 1000)
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="card w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center mb-6">Login - SEC+</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary-600 to-primary-800">
+      <div className="w-full max-w-md px-4">
+        <div className="bg-white rounded-lg shadow-2xl p-8">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-primary-600 mb-2">SEC+</h1>
+            <p className="text-gray-600">Faça login para continuar</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <Input
+              label="Email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="input-field"
+              leftIcon={<Mail size={18} className="text-gray-400" />}
+              placeholder="seu@email.com"
               required
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Senha
-            </label>
-            <input
+
+            <Input
+              label="Senha"
               type="password"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
-              className="input-field"
+              leftIcon={<Lock size={18} className="text-gray-400" />}
+              placeholder="••••••••"
               required
             />
+
+            <Button type="submit" fullWidth loading={loading}>
+              Entrar
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center text-sm text-gray-600">
+            <p>Use qualquer email e senha para entrar (demo)</p>
           </div>
-          <button type="submit" className="btn-primary w-full">
-            Entrar
-          </button>
-        </form>
+        </div>
       </div>
     </div>
   )

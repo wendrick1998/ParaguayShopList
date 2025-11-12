@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -48,7 +48,7 @@ model Produto {
   id            Int           @id @default(autoincrement())
   nome          String
   descricao     String?
-  preco         Decimal       @db.Decimal(10, 2)
+  preco         Float
   codigoBarras  String?
   lojaId        Int
   loja          Loja          @relation(fields: [lojaId], references: [id])
@@ -83,8 +83,8 @@ model Venda {
   usuario         Usuario     @relation(fields: [usuarioId], references: [id])
   lojaId          Int
   loja            Loja        @relation(fields: [lojaId], references: [id])
-  total           Decimal     @db.Decimal(10, 2)
-  desconto        Decimal     @default(0) @db.Decimal(10, 2)
+  total           Float
+  desconto        Float       @default(0)
   formaPagamento  String      // dinheiro, credito, debito, pix
   status          String      @default("concluida") // concluida, cancelada
   observacoes     String?
@@ -102,8 +102,8 @@ model ItemVenda {
   produtoId  Int
   produto    Produto  @relation(fields: [produtoId], references: [id])
   quantidade Int
-  precoUnit  Decimal  @db.Decimal(10, 2)
-  subtotal   Decimal  @db.Decimal(10, 2)
+  precoUnit  Float
+  subtotal   Float
   createdAt  DateTime @default(now())
 
   @@map("itens_venda")
@@ -132,9 +132,9 @@ model Caixa {
   usuario         Usuario  @relation(fields: [usuarioId], references: [id])
   dataAbertura    DateTime @default(now())
   dataFechamento  DateTime?
-  saldoInicial    Decimal  @db.Decimal(10, 2)
-  saldoFinal      Decimal? @db.Decimal(10, 2)
-  totalVendas     Decimal  @default(0) @db.Decimal(10, 2)
+  saldoInicial    Float
+  saldoFinal      Float?
+  totalVendas     Float    @default(0)
   status          String   @default("aberto") // aberto, fechado
   observacoes     String?
   createdAt       DateTime @default(now())

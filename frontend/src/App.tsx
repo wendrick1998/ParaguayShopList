@@ -5,10 +5,18 @@ import DashboardPage from './pages/DashboardPage'
 import ProdutosPage from './pages/ProdutosPage'
 import EstoquePage from './pages/EstoquePage'
 import VendasPage from './pages/VendasPage'
+import PDVPage from './pages/PDVPage'
+import CaixaPage from './pages/CaixaPage'
+import { ToastContainer } from './components/ui'
+import { useToastStore } from './store/toastStore'
 
 function App() {
+  const toasts = useToastStore((state) => state.toasts)
+  const removeToast = useToastStore((state) => state.removeToast)
+
   return (
     <div className="min-h-screen bg-gray-50">
+      <ToastContainer toasts={toasts} onClose={removeToast} />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -16,6 +24,8 @@ function App() {
         <Route path="/produtos" element={<ProdutosPage />} />
         <Route path="/estoque" element={<EstoquePage />} />
         <Route path="/vendas" element={<VendasPage />} />
+        <Route path="/pdv" element={<PDVPage />} />
+        <Route path="/caixa" element={<CaixaPage />} />
       </Routes>
     </div>
   )
