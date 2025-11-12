@@ -1,0 +1,144 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  email     String   @unique
+  senha     String
+  papel     String   @default("vendedor") // vendedor, gerente, admin
+  lojaId    Int
+  loja      Loja     @relation(fields: [lojaId], references: [id])
+  vendas    Venda[]
+  caixas    Caixa[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("usuarios")
+}
+
+model Loja {
+  id                     Int                     @id @default(autoincrement())
+  nome                   String
+  cnpj                   String?                 @unique
+  telefone               String?
+  endereco               String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  usuarios               Usuario[]
+  produtos               Produto[]
+  estoques               Estoque[]
+  vendas                 Venda[]
+  movimentacoesEstoque   MovimentacaoEstoque[]
+  caixas                 Caixa[]
+
+  @@map("lojas")
+}
+
+model Produto {
+  id            Int           @id @default(autoincrement())
+  nome          String
+  descricao     String?
+  preco         Decimal       @db.Decimal(10, 2)
+  codigoBarras  String?
+  lojaId        Int
+  loja          Loja          @relation(fields: [lojaId], references: [id])
+  estoques      Estoque[]
+  itensVenda    ItemVenda[]
+  movimentacoes MovimentacaoEstoque[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@map("produtos")
+}
+
+model Estoque {
+  id               Int      @id @default(autoincrement())
+  produtoId        Int
+  produto          Produto  @relation(fields: [produtoId], references: [id])
+  lojaId           Int
+  loja             Loja     @relation(fields: [lojaId], references: [id])
+  quantidade       Int      @default(0)
+  quantidadeMinima Int      @default(5)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([produtoId, lojaId])
+  @@map("estoques")
+}
+
+model Venda {
+  id              Int         @id @default(autoincrement())
+  numero          String      @unique
+  usuarioId       Int
+  usuario         Usuario     @relation(fields: [usuarioId], references: [id])
+  lojaId          Int
+  loja            Loja        @relation(fields: [lojaId], references: [id])
+  total           Decimal     @db.Decimal(10, 2)
+  desconto        Decimal     @default(0) @db.Decimal(10, 2)
+  formaPagamento  String      // dinheiro, credito, debito, pix
+  status          String      @default("concluida") // concluida, cancelada
+  observacoes     String?
+  itens           ItemVenda[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("vendas")
+}
+
+model ItemVenda {
+  id         Int      @id @default(autoincrement())
+  vendaId    Int
+  venda      Venda    @relation(fields: [vendaId], references: [id], onDelete: Cascade)
+  produtoId  Int
+  produto    Produto  @relation(fields: [produtoId], references: [id])
+  quantidade Int
+  precoUnit  Decimal  @db.Decimal(10, 2)
+  subtotal   Decimal  @db.Decimal(10, 2)
+  createdAt  DateTime @default(now())
+
+  @@map("itens_venda")
+}
+
+model MovimentacaoEstoque {
+  id          Int      @id @default(autoincrement())
+  produtoId   Int
+  produto     Produto  @relation(fields: [produtoId], references: [id])
+  lojaId      Int
+  loja        Loja     @relation(fields: [lojaId], references: [id])
+  tipo        String   // entrada, saida, ajuste
+  quantidade  Int
+  motivo      String?
+  observacoes String?
+  createdAt   DateTime @default(now())
+
+  @@map("movimentacoes_estoque")
+}
+
+model Caixa {
+  id              Int      @id @default(autoincrement())
+  lojaId          Int
+  loja            Loja     @relation(fields: [lojaId], references: [id])
+  usuarioId       Int
+  usuario         Usuario  @relation(fields: [usuarioId], references: [id])
+  dataAbertura    DateTime @default(now())
+  dataFechamento  DateTime?
+  saldoInicial    Decimal  @db.Decimal(10, 2)
+  saldoFinal      Decimal? @db.Decimal(10, 2)
+  totalVendas     Decimal  @default(0) @db.Decimal(10, 2)
+  status          String   @default("aberto") // aberto, fechado
+  observacoes     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("caixas")
+}
