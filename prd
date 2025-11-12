@@ -1,0 +1,498 @@
+# PRODUCT REQUIREMENTS DOCUMENT (PRD)
+## Sistema de Gestão Comercial - SEC+ (Versão Modernizada)
+
+**Versão:** 1.0  
+**Data:** Novembro 2025  
+**Autor:** Wendrick - Outlet Store+  
+**Status:** Planejamento  
+
+---
+
+## 1. VISÃO DO PRODUTO
+
+Um **sistema ERP minimalista, moderno e confiável** para gestão integrada de estoque e vendas, inspirado no Sistema SEC do Paraguai, porém com interface intuitiva, design limpo e infraestrutura em nuvem escalável.
+
+**Diferencial:** Simplicidade operacional + Poder de processamento + Interface limpa (minimalista)
+
+---
+
+## 2. OBJETIVOS PRINCIPAIS
+
+- ✅ **Substituir** o Sistema SEC legado por solução moderna e responsiva
+- ✅ **Integrar** estoque, vendas, PDV e financeiro em uma única plataforma
+- ✅ **Garantir** confiabilidade 99.9% uptime (crítico para operações varejistas)
+- ✅ **Oferecer** experiência minimalista (3 cliques para qualquer ação)
+- ✅ **Operar** online e offline (crucial para internet instável)
+- ✅ **Escalar** de 1 loja para múltiplas lojas/galerias
+
+---
+
+## 3. PÚBLICOS-ALVO (USER PERSONAS)
+
+### Persona 1: Vendedor de Loja
+- **Necessidade:** Vender rápido, dar desconto, fechar caixa
+- **Ponto de dor:** Lag do sistema, menus profundos, demora para buscar produto
+- **Métrica:** < 2 min para completar uma venda
+
+### Persona 2: Gestor de Estoque
+- **Necessidade:** Saber quantas unidades tem, avisar reposição, histórico de movimentações
+- **Ponto de dor:** Estoque desatualizado, relatórios lentos
+- **Métrica:** Tempo real de atualização
+
+### Persona 3: Proprietário/Administrador
+- **Necessidade:** Visão clara de lucro, vendas por loja, tendências
+- **Ponto de dor:** Relatórios complicados, dashboard confuso
+- **Métrica:** Tomada de decisão em < 5 minutos
+
+---
+
+## 4. FUNCIONALIDADES CORE (MVP - Versão 1.0)
+
+### 4.1 MÓDULO DE VENDAS (Frente de Caixa)
+
+#### Funcionalidade: Venda Rápida
+```
+Fluxo: [Buscar Produto] → [Qty] → [Desconto Opcional] → [Pagamento] → [Finalizar]
+```
+- Busca por código de barras (scan) ou nome
+- Autocomplete de produtos
+- Quantidade dinâmica (Up/Down arrows)
+- Desconto percentual ou fixo (máx 2 campos)
+- Formas de pagamento: Dinheiro, Cartão, PIX, Cheque
+- Emissão automática de recibo (não fiscal)
+- Impressão opcional (térmica 80mm)
+
+#### Funcionalidade: Gestão de Caixa
+- Abertura de caixa (saldo inicial)
+- Sangria (retirada)
+- Reforço (adição)
+- Fechamento de caixa (conferência + relatório)
+- Resumo de operador (quantas vendas, total, ticket médio)
+
+#### Funcionalidade: Devolução/Troca
+- Buscar venda anterior
+- Selecionar itens a devolver
+- Motivo da devolução (dropdown)
+- Recrédito automático em caixa
+
+---
+
+### 4.2 MÓDULO DE ESTOQUE
+
+#### Funcionalidade: Consulta de Estoque
+- Busca rápida por produto
+- Visualização: [Código | Produto | Qtd Atual | Preço | Categoria]
+- Histórico de 3 últimas movimentações
+- Alerta visual se estoque baixo (< min configurado)
+
+#### Funcionalidade: Entrada de Estoque
+- Recebimento de compra (vincular NF/pedido)
+- Entrada manual simples
+- Ajuste de estoque (inventário, quebra)
+- Foto do produto (opcional)
+
+#### Funcionalidade: Movimentação Interna
+- Transferência entre lojas
+- Reserva de produtos
+- Bloqueio de produtos (danificados, para devolução)
+
+---
+
+### 4.3 MÓDULO DE PRODUTOS
+
+#### Funcionalidade: Cadastro de Produtos
+- Campos essenciais:
+  - Código de barras (EAN-13)
+  - Descrição
+  - Preço de custo
+  - Preço de venda
+  - Categoria
+  - Estoque mínimo/máximo
+  - Ativo/Inativo
+- Upload em batch (CSV)
+- Fotos (principal + até 3 adicionais)
+
+#### Funcionalidade: Categorias
+- Criar/editar categorias
+- Hierarquia (categoria > subcategoria)
+- Filtrar produtos por categoria
+
+---
+
+### 4.4 MÓDULO FINANCEIRO (Básico)
+
+#### Funcionalidade: Dashboard de Vendas
+- Total de vendas do dia
+- Ticket médio
+- Produtos mais vendidos (top 5)
+- Formas de pagamento (gráfico pizza)
+- Comparação com dias anteriores
+
+#### Funcionalidade: Relatórios
+- **Relatório de Vendas:** Data, Operador, Total, Forma Pagamento
+- **Relatório de Estoque:** Produto, Qtd, Valor Total (FIFO/PEPS)
+- **Relatório de Movimentações:** Entrada, Saída, Ajuste
+- Exportar em PDF/Excel
+
+---
+
+### 4.5 MÓDULO DE OPERADORES/USUÁRIOS
+
+#### Funcionalidade: Gestão de Acesso
+- Criar usuário (nome, email, senha)
+- Perfis: Vendedor, Gestor de Estoque, Gerente, Administrador
+- Permissões granulares (por módulo)
+- Histórico de login/ações
+
+---
+
+## 5. ARQUITETURA TÉCNICA
+
+### 5.1 STACK RECOMENDADO
+
+| Camada | Tecnologia | Motivo |
+|--------|-----------|--------|
+| **Frontend** | React + TypeScript + TailwindCSS | UI minimalista, rápida, responsiva |
+| **Backend** | Node.js + Express | JavaScript full-stack, performance, comunidade |
+| **Banco de Dados** | PostgreSQL | Confiável, ACID transactions, escalável |
+| **Cache** | Redis | Consultas rápidas de estoque/produtos |
+| **Autenticação** | JWT + OAuth2 | Segurança, stateless |
+| **Hosting** | Vercel (Frontend) + Railway/Render (Backend) | Escalabilidade automática |
+| **Banco Dados** | Supabase (PostgreSQL gerenciado) | Integrado, backups automáticos |
+| **Fila de Mensagens** | Bull (Node.js) | Processamento assíncrono (emissão de recibos, relatórios) |
+
+### 5.2 ARQUITETURA DE DADOS
+
+#### Diagrama Entidades-Relacionamento (Simplificado)
+
+```
+USUARIOS
+├─ id (PK)
+├─ email
+├─ senha_hash
+├─ perfil (enum: vendedor, gestor, gerente, admin)
+├─ ativo
+└─ criado_em
+
+LOJAS
+├─ id (PK)
+├─ nome
+├─ endereco
+├─ telefone
+└─ ativa
+
+PRODUTOS
+├─ id (PK)
+├─ codigo_barras (UNIQUE)
+├─ descricao
+├─ categoria_id (FK)
+├─ preco_custo
+├─ preco_venda
+├─ estoque_minimo
+├─ estoque_maximo
+├─ ativo
+└─ criado_em
+
+ESTOQUES
+├─ id (PK)
+├─ loja_id (FK)
+├─ produto_id (FK)
+├─ quantidade_atual
+├─ ultima_atualizacao
+└─ UNIQUE(loja_id, produto_id)
+
+VENDAS
+├─ id (PK)
+├─ loja_id (FK)
+├─ usuario_id (FK)
+├─ data_venda
+├─ subtotal
+├─ desconto_total
+├─ total
+├─ forma_pagamento
+└─ observacoes
+
+ITENS_VENDA
+├─ id (PK)
+├─ venda_id (FK)
+├─ produto_id (FK)
+├─ quantidade
+├─ preco_unitario
+├─ desconto_item
+└─ subtotal
+
+MOVIMENTACOES_ESTOQUE
+├─ id (PK)
+├─ loja_id (FK)
+├─ produto_id (FK)
+├─ tipo (enum: entrada, saida, ajuste, transferencia)
+├─ quantidade
+├─ documento (NF, pedido, etc)
+├─ usuario_id (FK)
+└─ criado_em
+
+CAIXA
+├─ id (PK)
+├─ loja_id (FK)
+├─ usuario_id (FK)
+├─ data_abertura
+├─ saldo_inicial
+├─ sangrias (DECIMAL)
+─ reforcos (DECIMAL)
+├─ data_fechamento
+├─ total_esperado
+├─ total_conferido
+└─ diferenca
+```
+
+---
+
+## 6. FLUXOS DE NEGÓCIO
+
+### 6.1 FLUXO DE VENDA (Mais Crítico)
+
+```
+1. Vendedor abre PDV
+   └─ [Sistema verifica caixa aberto?]
+      ├─ NÃO → Exige abrir caixa
+      └─ SIM → Vai para tela de venda
+
+2. Venda Iniciada
+   └─ Tela limpa com:
+      ├─ Campo de busca (barcode/nome)
+      ├─ Carrinho de compras (itens)
+      └─ Botões: Finalizar, Limpar, Desconto
+
+3. Adicionar Produto
+   └─ Scan de código de barras
+      ├─ Produto não encontrado → Mensagem de erro
+      └─ Produto encontrado + verificar estoque
+         ├─ Sem estoque → Mensagem de aviso
+         └─ Com estoque → Adicionar ao carrinho
+
+4. Carrinho Atualizado
+   └─ Exibe:
+      ├─ Produto | Qtd | Preço Unit | Subtotal
+      ├─ Subtotal da venda
+      ├─ Campo desconto (opcional)
+      └─ Total esperado
+
+5. Desconto (opcional)
+   └─ Vendedor aplica desconto %
+      └─ Atualiza total em tempo real
+
+6. Finalizar Venda
+   └─ Selecionar forma pagamento
+      ├─ Dinheiro: Exige valor pago + troco
+      ├─ Cartão: Autorização manual/automática
+      ├─ PIX: Gera QR code
+      └─ Cheque: Dados do cheque
+
+7. Venda Concluída
+   └─ Atualizar estoque
+   └─ Salvar na venda no BD
+   └─ Gerar recibo (opcional imprimir)
+   └─ Retornar tela de venda (limpar carrinho)
+```
+
+### 6.2 FLUXO DE AJUSTE DE ESTOQUE
+
+```
+1. Gestor vai em Estoque → Ajuste
+2. Busca produto
+3. Insere quantidade (entrada/saída)
+4. Motivo (dropdown: inventário, quebra, devolução, etc)
+5. Clica "Confirmar"
+6. Sistema valida:
+   ├─ Quantidade válida?
+   └─ Há permissão?
+7. Salva movimentação
+8. Atualiza estoque em tempo real
+9. Notificação de sucesso
+```
+
+---
+
+## 7. INTERFACE & UX
+
+### 7.1 DESIGN SYSTEM (Minimalista)
+
+**Paleta de Cores:**
+- Primária: #2563EB (Azul - Ações)
+- Secundária: #10B981 (Verde - Sucesso)
+- Alerta: #F59E0B (Amarelo - Aviso)
+- Erro: #EF4444 (Vermelho - Erro)
+- Neutra: #6B7280 (Cinza - Texto)
+- Fundo: #FFFFFF / #F9FAFB (Branco)
+
+**Tipografia:**
+- Sans-serif: Inter ou SF Pro Display
+- Tamanhos: 12px (label) | 14px (body) | 16px (heading) | 20px (title)
+
+### 7.2 TELAS PRINCIPAIS
+
+#### Tela 1: Dashboard (Home)
+```
+┌─────────────────────────────────────┐
+│ Sistema SEC+ │ Olá, Wendrick       │
+├─────────────────────────────────────┤
+│                                     │
+│  📊 Vendas Hoje      💰 Estoque    │
+│  R$ 1.234,56         2.847 itens   │
+│                                     │
+│  🏪 [PDV] [Estoque] [Relatórios]  │
+│                                     │
+│  📈 Últimas 5 Vendas               │
+│  ├─ 09:30 - Camiseta (1) - R$49   │
+│  ├─ 09:45 - Calça (2) - R$158    │
+│  └─ 10:15 - Produto X (1) - R$89  │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+#### Tela 2: PDV (Ponto de Venda)
+```
+┌────────────────────────────────────────┐
+│ PDV - Caixa 01        Caixa Aberto    │
+├────────────────────────────────────────┤
+│  [Buscar produto...] [🔍]              │
+├────────────────────────────────────────┤
+│                                        │
+│  Produto | Qtd | Unit | Subtotal      │
+│  ─────────────────────────────────     │
+│  Camiseta | 2  | 49   | 98,00         │
+│  Calça    | 1  | 79   | 79,00         │
+│                                        │
+│  Subtotal........................177,00 │
+│  Desconto..................-[0.00]%    │
+│  ─────────────────────────────────     │
+│  TOTAL.........................177,00  │
+│                                        │
+│  [Desconto] [PIX] [Cartão] [💵] [X]  │
+└────────────────────────────────────────┘
+```
+
+#### Tela 3: Consulta de Estoque
+```
+┌──────────────────────────────────┐
+│ Estoque da Loja               │
+├──────────────────────────────────┤
+│ [Buscar produto...]              │
+├──────────────────────────────────┤
+│                                  │
+│ Cód | Produto | Qtd | Mín | ⚠️ │
+│ ────────────────────────────────│
+│ 001 | Camiseta| 45  | 20  | ✓  │
+│ 002 | Calça   | 8   | 20  | ⚠️ │
+│ 003 | Meia    | 120 | 50  | ✓  │
+│                                  │
+│ [+ Adicionar] [Ajustar] [📊]    │
+└──────────────────────────────────┘
+```
+
+---
+
+## 8. REQUISITOS NÃO-FUNCIONAIS
+
+### 8.1 PERFORMANCE
+- **Tempo de Resposta:** < 200ms para operações críticas
+- **TTL de Cache:** Estoque = 5s, Produtos = 30s
+- **Carga Máxima:** 100 usuários simultâneos por loja
+
+### 8.2 SEGURANÇA
+- HTTPS/TLS para todas as comunicações
+- Criptografia de senhas (bcrypt + salt)
+- Rate limiting: 100 req/min por IP
+- Logs de auditoria para vendas e ajustes de estoque
+- Backup diário (retenção: 30 dias)
+
+### 8.3 CONFIABILIDADE
+- SLA: 99.9% uptime
+- Modo offline para PDV (sincroniza quando volta online)
+- Validação de integridade de dados
+- Alertas de erro para time
+
+### 8.4 ESCALABILIDADE
+- Arquitetura stateless
+- Banco de dados replicado (master-slave)
+- CDN para assets estáticos
+- Load balancer no backend
+
+---
+
+## 9. ROADMAP DE DESENVOLVIMENTO
+
+### FASE 1 (MVP - 4 semanas)
+- ✅ Setup infraestrutura (Supabase + Vercel)
+- ✅ Banco de dados (schemas)
+- ✅ Módulo de Vendas (PDV básico)
+- ✅ Módulo de Estoque (consulta + ajuste)
+- ✅ Autenticação
+- ✅ Testes (unit + integração)
+
+### FASE 2 (6 semanas)
+- Produtos (CRUD completo + upload CSV)
+- Dashboard financeiro
+- Relatórios (PDF/Excel)
+- Modo offline para PDV
+- Integração WhatsApp (alertas)
+
+### FASE 3 (8 semanas)
+- Multi-loja
+- CRM básico (histórico cliente)
+- IA para recomendação de reposição
+- Integração fiscal (NF-e)
+- Mobile app (React Native)
+
+---
+
+## 10. MÉTRICAS DE SUCESSO
+
+| Métrica | Meta | Como Medir |
+|---------|------|-----------|
+| Tempo de Venda | < 2 min | Analytics |
+| Uptime | 99.9% | Monitoring (UptimeRobot) |
+| Taxa de Erro | < 0.1% | Logs de erro |
+| Satisfação User | 4.5/5 | NPS Survey |
+| Adoção | 100% da equipe | Logins ativos |
+| Ticket Médio | +5% | Comparação mês anterior |
+
+---
+
+## 11. RESTRIÇÕES & DEPENDÊNCIAS
+
+### Restrições
+- Orçamento: ~1000 BRL/mês (infraestrutura)
+- Time: Solo founder (você)
+- Internet: Instável em Ciudad del Este → Offline-first
+
+### Dependências Externas
+- Fornecedores de produtos (integrações futuras)
+- Gateway de pagamento (PIX/cartão)
+- Serviço fiscal (DNIT Paraguay - futuro)
+
+---
+
+## 12. GLOSSÁRIO
+
+- **PDV:** Ponto de Venda (Frente de caixa)
+- **ERP:** Enterprise Resource Planning
+- **SKU:** Stock Keeping Unit (código produto)
+- **FIFO/PEPS:** Método de valoração de estoque
+- **NF-e:** Nota Fiscal eletrônica
+- **JWT:** JSON Web Token (autenticação)
+- **Redis:** Banco de dados em memória (cache)
+
+---
+
+## 13. APROVAÇÕES
+
+| Papel | Nome | Data | Assinatura |
+|------|------|------|-----------|
+| Product Owner | Wendrick | - | |
+| Tech Lead | Wendrick | - | |
+| Stakeholder | Outlet Store+ | - | |
+
+---
+
+**FIM DO PRD**
