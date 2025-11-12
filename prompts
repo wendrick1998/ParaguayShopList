@@ -1,0 +1,729 @@
+# PROMPTS CLAUDE CODE - COPIAR E COLAR
+## Prompts prontos para construir SEC+ rapidinho
+
+---
+
+## 🚀 PROMPT 1: SETUP INICIAL (30 min)
+
+Copiar e colar exatamente isto no Claude Code:
+
+```
+Você é um expert fullstack Node.js + React. Vou construir um sistema de gestão de estoque e vendas chamado SEC+.
+
+Crie uma estrutura inicial de projeto com:
+
+FRONTEND (React + TypeScript + TailwindCSS):
+- Pasta: /frontend
+- Vite como build tool
+- React Router v6 para navegação
+- Zustand para state management
+- Axios para API calls
+- Estrutura de pastas: pages, components, store, utils, hooks
+- package.json com todas dependências
+
+BACKEND (Node.js + Express + TypeScript):
+- Pasta: /backend
+- Express com CORS habilitado
+- Prisma ORM para database
+- PostgreSQL connection
+- JWT authentication (jsonwebtoken)
+- Estrutura de pastas: routes, middleware, prisma
+- package.json com todas dependências
+- tsconfig.json configurado
+
+DATABASE (Prisma Schema):
+- PostgreSQL schema com tabelas: 
+  * usuarios (id, email, senha_hash, nome, perfil, ativo, criado_em)
+  * lojas (id, nome, endereco, telefone, ativa)
+  * produtos (id, codigo_barras UNIQUE, descricao, preco_custo, preco_venda, estoque_minimo, estoque_maximo, ativo)
+  * estoques (id, loja_id, produto_id, quantidade_atual, ultima_atualizacao)
+  * vendas (id, loja_id, usuario_id, data_venda, subtotal, desconto_total, total, forma_pagamento)
+  * itens_venda (id, venda_id, produto_id, quantidade, preco_unitario, desconto_item, subtotal)
+  * movimentacoes_estoque (id, loja_id, produto_id, tipo, quantidade, documento, usuario_id, criado_em)
+  * caixa (id, loja_id, usuario_id, data_abertura, saldo_inicial, sangrias, reforcos, data_fechamento, total_esperado, total_conferido, diferenca)
+
+ARQUIVOS CONFIG:
+- .gitignore (Node.js + .env)
+- .env.example (both frontend e backend)
+- README.md com instruções
+
+Gere TODA a estrutura. Não execute npm install, só crie os arquivos.
+
+Responda em português do Brasil.
+```
+
+**Depois de gerado:**
+```bash
+cd sec-plus
+git init
+git add .
+git commit -m "initial: SEC+ fullstack skeleton"
+```
+
+---
+
+## 📦 PROMPT 2: PRISMA SCHEMA COMPLETO (20 min)
+
+```
+No arquivo /backend/prisma/schema.prisma, crie o schema PostgreSQL completo com:
+
+Tabelas com relacionamentos:
+- usuarios (id, email, senha_hash, nome, perfil ENUM[vendedor|gestor|gerente|admin], ativo, criado_em)
+- lojas (id, nome, endereco, telefone, ativa, criado_em)
+- categorias (id, nome, descricao)
+- produtos (id, codigo_barras UNIQUE, descricao, categoria_id FK, preco_custo, preco_venda, estoque_minimo, estoque_maximo, ativo, criado_em)
+- estoques (id, loja_id FK, produto_id FK, quantidade_atual, ultima_atualizacao) com UNIQUE(loja_id, produto_id)
+- vendas (id, loja_id FK, usuario_id FK, data_venda TIMESTAMP, subtotal, desconto_total, total, forma_pagamento ENUM[dinheiro|cartao|pix|cheque], observacoes, criado_em)
+- itens_venda (id, venda_id FK, produto_id FK, quantidade, preco_unitario, desconto_item, subtotal)
+- movimentacoes_estoque (id, loja_id FK, produto_id FK, tipo ENUM[entrada|saida|ajuste|transferencia], quantidade, documento, usuario_id FK, criado_em)
+- caixa (id, loja_id FK, usuario_id FK, data_abertura, saldo_inicial, sangrias, reforcos, data_fechamento, total_esperado, total_conferido, diferenca)
+
+Adicione:
+- Índices para performance: @index em codigo_barras, data_venda, email
+- Timestamps automáticos: @default(now()), @updatedAt
+- Relacionamentos entre tabelas
+- Enums for: perfil, forma_pagamento, tipo_movimento
+
+Gere o schema.prisma PRONTO para rodar com npx prisma migrate dev
+```
+
+**Depois de gerado:**
+```bash
+cd backend
+npm install
+npx prisma generate
+npx prisma migrate dev --name init
+npx prisma studio
+# Verifica se todas tabelas foram criadas
+```
+
+---
+
+## 🔐 PROMPT 3: AUTENTICAÇÃO BACKEND (45 min)
+
+```
+Crie os seguintes arquivos em /backend/src/:
+
+1. /backend/src/middleware/auth.ts:
+   - Função authMiddleware que:
+     * Extrai token do header Authorization: Bearer <token>
+     * Valida token JWT usando jsonwebtoken
+     * Se inválido: retorna 401 com mensagem
+     * Se válido: injeta req.userId e req.userRole
+     * Exporta para usar em rotas protegidas
+
+2. /backend/src/routes/auth.ts:
+   - POST /auth/login
+     * Body: { email, senha }
+     * Busca usuario por email no Prisma
+     * Valida senha usando bcryptjs.compare
+     * Se inválido: retorna 401
+     * Se válido: gera JWT token com expiration 7 dias
+     * Retorna: { token, user: { id, email, nome, perfil } }
+   - GET /auth/me (protegido com authMiddleware)
+     * Busca usuario usando req.userId
+     * Retorna: { id, email, nome, perfil }
+   - POST /auth/logout
+     * Apenas aviso ao cliente (não faz nada, limpa localStorage client-side)
+   
+   Use:
+   - Prisma para database queries
+   - bcryptjs para password comparison
+   - jsonwebtoken para token generation
+   - dotenv para JWT_SECRET
+
+3. /backend/src/server.ts:
+   - Setup Express app
+   - app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173' }))
+   - app.use(express.json())
+   - app.use('/auth', authRoutes) - importe de routes/auth
+   - Error handler middleware que loga erros e retorna JSON
+   - Rodar em PORT (default 3000)
+   - Log: console.log quando servidor inicia
+
+Use bcryptjs, jsonwebtoken, express, cors, dotenv, prisma
+```
+
+**Depois de gerado:**
+```bash
+# Em /backend/.env adicione:
+DATABASE_URL="postgresql://user:pass@localhost:5432/sec_plus"
+JWT_SECRET="seu_jwt_secret_super_secreto_12345"
+CORS_ORIGIN="http://localhost:5173"
+PORT=3000
+
+# Rode:
+npm run dev
+```
+
+---
+
+## 👤 PROMPT 4: SEED DATABASE COM USUÁRIO ADMIN (15 min)
+
+```
+Crie /backend/prisma/seed.ts que:
+
+1. Conecta ao Supabase usando Prisma
+2. Cria 1 usuário admin com:
+   - email: "wendrick@outlet.com"
+   - senha: "teste123" (hash com bcryptjs, salt 10)
+   - nome: "Wendrick Admin"
+   - perfil: "admin"
+   - ativo: true
+3. Cria 1 loja padrão:
+   - nome: "Loja Cidade Nova"
+   - endereco: "Rua Principal, 123"
+   - telefone: "(49) 99999-9999"
+   - ativa: true
+4. Cria 5 produtos de teste:
+   - Camiseta (codigo_barras: "001", preco_venda: 49.90)
+   - Calça Jeans (codigo_barras: "002", preco_venda: 129.90)
+   - Meias (codigo_barras: "003", preco_venda: 29.90)
+   - Camiseta Polo (codigo_barras: "004", preco_venda: 79.90)
+   - Shorts (codigo_barras: "005", preco_venda: 59.90)
+5. Cria estoque para cada produto na loja (quantidade: 50 cada)
+6. Log cada ação criada
+7. Handle duplicata (se já existir, skip sem erro)
+
+Use:
+- Prisma para criar records
+- bcryptjs.hash para password
+- async/await
+```
+
+**Depois de gerado:**
+```bash
+# Em /backend/package.json, adicione no section "prisma":
+{
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  }
+}
+
+# Rode:
+npx prisma db seed
+
+# Verifica no Prisma Studio:
+npx prisma studio
+# Deve ver usuario + loja + 5 produtos no estoque
+```
+
+---
+
+## 🎨 PROMPT 5: LOGIN PAGE FRONTEND (30 min)
+
+```
+Crie /frontend/src/pages/Login.tsx que:
+
+1. Form com:
+   - Input email (placeholder: "seu@email.com")
+   - Input senha (type password, placeholder: "Sua senha")
+   - Botão "Entrar" (desabilitado enquanto loading)
+   - Mostrar erro em caixa vermelha se falhar
+   - Mostrar loading spinner enquanto enviando
+
+2. Chamada API:
+   - POST /auth/login com { email, senha }
+   - Salvar token em localStorage ("token")
+   - Se sucesso: redirect para "/"
+   - Se erro: mostrar mensagem de erro
+
+3. Styling com TailwindCSS:
+   - Fundo degradado azul
+   - Card branco centralizado
+   - Logo SEC+ no topo
+   - Cores: azul primary (#2563EB), vermelho erro (#EF4444)
+
+Use:
+- useNavigate para redirect
+- useAuthStore (Zustand) - será criado depois
+- axios para API call
+- TailwindCSS para styling
+- React state para form
+
+State local: email, senha, loading, error
+```
+
+---
+
+## 📦 PROMPT 6: AUTH STORE ZUSTAND (20 min)
+
+```
+Crie /frontend/src/store/auth.ts que:
+
+Interface User:
+- id: number
+- email: string
+- nome: string
+- perfil: 'vendedor' | 'gestor' | 'gerente' | 'admin'
+
+Zustand Store com:
+1. State:
+   - user: User | null (inicial: null)
+   - loading: boolean (inicial: false)
+   - error: string | null (inicial: null)
+
+2. Actions:
+   - login(email: string, senha: string): Promise<void>
+     * POST /auth/login com { email, senha }
+     * Salva token em localStorage('token')
+     * Set user com dados retornados
+     * Se erro: set error message
+   
+   - logout(): void
+     * Remove localStorage('token')
+     * Set user = null
+     * Set error = null
+   
+   - checkAuth(): Promise<void>
+     * GET /auth/me (com token no header)
+     * Se válido: set user
+     * Se erro 401: limpa localStorage
+
+3. Export: useAuthStore = create<AuthStore>((set) => ({...}))
+
+Use:
+- axios para chamadas API
+- localStorage para persistência
+- Zustand create hook
+```
+
+---
+
+## 🏠 PROMPT 7: LAYOUT + NAVEGAÇÃO (45 min)
+
+```
+Crie os seguintes arquivos:
+
+1. /frontend/src/components/Layout.tsx:
+   - Sidebar (esquerda, width-64):
+     * Logo SEC+ no topo
+     * Nome do usuário abaixo do logo
+     * Menu de navegação:
+       - 🏠 Dashboard (onClick: navigate('/'))
+       - 💳 PDV (onClick: navigate('/pdv'))
+       - 📦 Estoque (onClick: navigate('/estoque'))
+       - 📊 Relatórios (onClick: navigate('/relatorios'))
+     * Botão "Sair" no rodapé (logout)
+   - Main area (flex-1):
+     * Header com:
+       - Hora atual
+       - Loja atual
+       - Indicador online/offline (🟢 Online / 🔴 Offline)
+     * Content area com children
+
+   Styling:
+   - Sidebar: bg-white shadow
+   - Menu items: hover:bg-blue-50
+   - TailwindCSS responsive
+
+2. /frontend/src/App.tsx:
+   - React Router setup
+   - Routes:
+     * "/" → Dashboard (protegido)
+     * "/pdv" → PDV (protegido)
+     * "/estoque" → Estoque (protegido)
+     * "/relatorios" → Relatórios (protegido)
+     * "/login" → Login (público)
+   - Protected routes: se !user → redirect /login
+   - Usar Layout wrapper para rotas autenticadas
+
+3. /frontend/src/pages/Dashboard.tsx:
+   - Placeholder simples por enquanto
+   - 3 Cards KPI com dados mockados:
+     * Vendas Hoje: R$ 0.00
+     * Estoque Total: 0 itens
+     * Alertas: 0 baixos
+   - Botões rápidos: [Vender] [Estoque] [Relatórios]
+
+Use:
+- React Router v6
+- Zustand useAuthStore
+- useNavigate, useLocation
+- TailwindCSS
+- React Icons para ícones
+```
+
+---
+
+## 💳 PROMPT 8: PDV BACKEND - VENDAS API (1h)
+
+```
+Crie /backend/src/routes/vendas.ts com:
+
+1. GET /produtos?search=termo&categoria=id (protegido)
+   - Query param search: busca fuzzy em descricao ou codigo_barras
+   - Retorna: [{ id, codigo_barras, descricao, preco_venda, estoque_atual }]
+   - Max 20 resultados
+   - Order by produtos mais vendidos (frequentes)
+
+2. POST /vendas (protegido)
+   - Body: {
+       lojaId: number,
+       itens: [{
+         produtoId: number,
+         quantidade: number,
+         desconto: number (0-100%)
+       }],
+       formaPagamento: 'dinheiro'|'cartao'|'pix'|'cheque'
+     }
+   - Validações:
+     * Quantidade > 0
+     * Estoque suficiente (se não: retorna 400)
+     * Total venda > 0
+   - TRANSAÇÃO Prisma (tudo ou nada):
+     * Criar venda
+     * Criar itens_venda
+     * Reduzir quantidade em estoques
+     * Log em movimentacoes_estoque (tipo: 'saida')
+   - Retorna: { vendaId, total, itens }
+
+3. GET /vendas?lojaId=1&data=2025-11-11 (protegido)
+   - Filtro data (begin/end do dia)
+   - Retorna: [{ id, data, total, formaPagamento, operador, itens }]
+   - Ordenado por data DESC
+
+4. POST /caixa/abrir (protegido)
+   - Body: { lojaId, saldoInicial }
+   - Cria record em caixa
+   - Retorna: { caixaId, data_abertura }
+
+5. POST /caixa/fechar (protegido)
+   - Body: { caixaId, totalConferido }
+   - Atualiza caixa com data_fechamento
+   - Calcula diferenca = totalConferido - totalEsperado
+   - Retorna: { caixaId, diferenca, status: 'OK'|'ALERTA' }
+
+Use:
+- Prisma client
+- Transações Prisma ($transaction)
+- Error handling
+```
+
+---
+
+## 💳 PROMPT 9: PDV FRONTEND (1h 30min)
+
+```
+Crie /frontend/src/pages/PDV.tsx que:
+
+State (Zustand ou React useState):
+- carrinho: [{ produtoId, descricao, quantidade, preco_unitario, subtotal }, ...]
+- desconto: number (0-100)
+- total: number
+- formaPagamento: string
+- loading: boolean
+
+Layout:
+
+1. Busca de Produto (topo):
+   - Input com placeholder "Buscar por código ou nome..."
+   - Botão busca
+   - Dropdown com autocomplete (mostra resultados enquanto digita)
+   - Click em resultado: adiciona ao carrinho
+
+2. Carrinho (centro):
+   - Tabela: Produto | Qty | Preço Unit | Subtotal
+   - Input para mudar Qty em cada linha
+   - Botão X para remover item
+   - Se vazio: mostrar "Carrinho vazio"
+
+3. Resumo (rodapé):
+   - Subtotal: R$ 0.00
+   - Desconto: [-0-]% (input com % ou R$)
+   - Total: R$ 0.00 (bolded, grande)
+
+4. Pagamento (rodapé):
+   - Botões: [💵 Dinheiro] [💳 Cartão] [📱 PIX] [📄 Cheque]
+   - Se Dinheiro: input "Valor pago" com troco automático
+   - Se PIX: gera QR code (mock por agora)
+
+5. Ações:
+   - [❌ Limpar] - reseta carrinho
+   - [✅ Finalizar Venda] - POST /vendas, mostra sucesso/erro
+   - [🖨️ Imprimir] - imprime recibo (futuro)
+
+Comportamentos:
+- Cada item no carrinho: atualiza total em tempo real
+- Validar: estoque suficiente ANTES de finalizar
+- Após finalizar: carrinho limpa, mostra recibo breve
+- Erro: mostrar em toast/modal
+
+Styling:
+- Minimalista, limpo
+- Focus em inputs rápido (atalhos: F1 = busca, Enter = finalizar)
+
+Use:
+- Zustand para carrinho state
+- Axios para POST /vendas
+- TailwindCSS
+- Vitest para testes (opcional agora)
+```
+
+---
+
+## 📦 PROMPT 10: ESTOQUE BACKEND (45 min)
+
+```
+Crie /backend/src/routes/estoque.ts com:
+
+1. GET /estoque?lojaId=1 (protegido)
+   - Listar todos produtos com estoque da loja
+   - Retorna: [{ id, codigo_barras, descricao, quantidade_atual, minimo, maximo, alerta: boolean }]
+   - Ordenado por produto_id
+
+2. GET /estoque/:produtoId?lojaId=1 (protegido)
+   - Detalhe de estoque
+   - Retorna: { produto, estoque_atual, movimentacoes: [últimas 3] }
+
+3. POST /estoque/ajuste (protegido)
+   - Body: { lojaId, produtoId, tipo, quantidade, motivo }
+   - tipo: 'entrada' | 'saida' | 'ajuste'
+   - Atualiza tabela estoques (quantidade_atual)
+   - Log em movimentacoes_estoque
+   - Retorna: { novo_saldo, movimento_id }
+
+4. POST /estoque/transferencia (protegido)
+   - Body: { lojaId_origem, lojaId_destino, produtoId, quantidade }
+   - Transação:
+     * Reduz estoque origem
+     * Aumenta estoque destino
+     * Log 2 movimentacoes (saida origem, entrada destino)
+   - Retorna: { movimentacoes: [...] }
+
+5. GET /estoque/movimentacoes?lojaId=1&dataInicio=2025-11-01 (protegido)
+   - Histórico de movimentações
+   - Filtro por data (begin/end)
+   - Retorna: [{ id, data, tipo, quantidade, motivo, usuario }]
+
+Use:
+- Prisma
+- Transações para integridade
+- Date queries
+```
+
+---
+
+## 📊 PROMPT 11: DASHBOARD BACKEND (30 min)
+
+```
+Crie /backend/src/routes/dashboard.ts com:
+
+1. GET /dashboard/resumo?lojaId=1&data=2025-11-11 (protegido)
+   - Data = dia específico
+   - Retorna: {
+       total_vendas: 2567.50,
+       quantidade_vendas: 5,
+       ticket_medio: 513.50,
+       forma_pagamento: {
+         dinheiro: 1200,
+         cartao: 800,
+         pix: 567.50
+       },
+       top_produtos: [
+         { id, descricao, quantidade }
+       ]
+     }
+
+2. GET /dashboard/grafico?lojaId=1&periodo=7dias (protegido)
+   - Últimos 7 dias (ou outro período)
+   - Retorna: [
+       { data: '2025-11-11', total: 2567.50 },
+       { data: '2025-11-10', total: 1890.00 },
+       ...
+     ]
+
+3. GET /dashboard/ultimas-vendas?lojaId=1&limit=5 (protegido)
+   - 5 últimas vendas
+   - Retorna: [{ id, hora, operador, total, itens_count }]
+
+4. GET /relatorio/estoque?lojaId=1 (protegido)
+   - Todos produtos com valor total por categoria
+   - Retorna: [{
+       categoria,
+       produtos: [{ descricao, quantidade, valor_total }],
+       subtotal_categoria
+     }]
+
+Use:
+- Prisma aggregation ($sum, $count)
+- Date queries (startOfDay, endOfDay)
+- Group by para categorias
+```
+
+---
+
+## 📊 PROMPT 12: DASHBOARD FRONTEND (1h)
+
+```
+Crie /frontend/src/pages/Dashboard.tsx que:
+
+Layout:
+
+1. Cards KPI (topo, grid 3 colunas):
+   - 📊 Vendas Hoje
+     * Valor: R$ 0.00
+     * Comparação: ↑ 12% vs ontem
+   - 📦 Estoque Total
+     * Quantidade: 2.847 itens
+     * Alertas: 15 produtos baixo
+   - 💰 Ticket Médio
+     * Valor: R$ 125.30
+     * Total de vendas: 25
+
+2. Gráfico de Vendas (meio):
+   - LineChart - últimos 7 dias
+   - X: dias da semana
+   - Y: valor em R$
+   - Use Recharts
+
+3. Tabela Últimas Vendas (rodapé):
+   - Hora | Operador | Produto | Qtd | Total
+   - 5 últimas vendas
+   - Clicável para ver detalhes
+
+4. Botões Rápidos (overlay ou floating):
+   - [💳 Vender Agora] → /pdv
+   - [📦 Gerenciar Estoque] → /estoque
+   - [📊 Ver Relatórios] → /relatorios
+
+Comportamentos:
+- Auto-refresh a cada 30s (dados em tempo real)
+- Loading skeleton enquanto busca dados
+- Mostrar erro se API falhar
+
+Use:
+- Axios para GET /dashboard/*
+- Recharts para gráfico LineChart
+- React Query para caching (opcional)
+- TailwindCSS
+```
+
+---
+
+## 🚀 PROMPT 13: DEPLOY - VERCEL (30 min)
+
+```
+Crie /frontend/vercel.json e prepare deploy:
+
+vercel.json:
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "env": {
+    "VITE_API_URL": {
+      "required": true
+    }
+  }
+}
+
+Em package.json:
+- "build": "vite build"
+- "preview": "vite preview"
+
+Instruções:
+1. npm i -g vercel
+2. vercel login
+3. vercel link (conecta repo GitHub)
+4. Adicionar env var em Vercel dashboard:
+   - VITE_API_URL = https://seu-api.railway.app
+5. vercel deploy (ou faz git push, que auto-deploy)
+
+Resultado: https://seu-app.vercel.app
+```
+
+---
+
+## 🚀 PROMPT 14: DEPLOY - RAILWAY (30 min)
+
+```
+Crie /backend/ files para Railway deploy:
+
+1. /backend/railway.json:
+{
+  "buildCommand": "npm install && npm run build",
+  "startCommand": "npm run start",
+  "port": 3000
+}
+
+2. /backend/package.json scripts:
+- "build": "tsc"
+- "start": "node dist/server.js"
+- "dev": "ts-node src/server.ts"
+
+3. /backend/.env.railway (secrets):
+DATABASE_URL=...
+JWT_SECRET=...
+CORS_ORIGIN=https://seu-app.vercel.app
+NODE_ENV=production
+
+Instruções:
+1. npm i -g @railway/cli
+2. railway login
+3. railway link
+4. railway up (deploy)
+
+Resultado: API em https://seu-api.railway.app
+```
+
+---
+
+## ✅ PRÓXIMOS PROMPTS (Depois)
+
+**PROMPT 15:** "Adicione validações Zod em backend e frontend"
+**PROMPT 16:** "Crie testes com Vitest para auth backend"
+**PROMPT 17:** "Implemente Service Worker para offline mode"
+**PROMPT 18:** "Adicione relatórios em PDF com pdfkit"
+**PROMPT 19:** "Crie integração WhatsApp para alertas"
+
+---
+
+## 💡 DICAS DE USO
+
+### Como usar os prompts:
+1. Copiar prompt INTEIRO
+2. Colar no Claude Code
+3. Pressionar Enter
+4. Esperar código ser gerado
+5. Testar localmente
+6. Se OK: fazer commit e próximo prompt
+7. Se não OK: ajustar e pedir refactor
+
+### Se der erro:
+```
+"Há erro nesse código:
+[cola o erro]
+
+Corrija e mantenha a lógica igual"
+```
+
+### Se quiser mudar:
+```
+"Refaça este arquivo com:
+- Sem logs no console
+- Cores mais simples
+- Sem campo de X"
+```
+
+---
+
+## 📅 VELOCIDADE ESPERADA
+
+Com estes prompts + Claude Code:
+- **Prompt 1:** 30 min
+- **Prompts 2-7:** 3h
+- **Prompts 8-9:** 2.5h (PDV)
+- **Prompts 10-11:** 2h (Estoque)
+- **Prompts 12-14:** 2h (Dashboard + Deploy)
+
+**Total: ~10-12 horas de desenvolvimento**
+
+Deploy ao vivo em 1.5 semanas trabalhando 3-4h/dia.
+
+---
+
+**Vamo começar? Copia o PROMPT 1 agora! 🚀**
+
+---
+
+FIM DOS PROMPTS
