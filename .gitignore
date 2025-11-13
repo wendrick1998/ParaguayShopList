@@ -45,3 +45,4 @@ vite.config.ts.*
 # Prisma
 *.db
 *.db-journal
+backend/.env
