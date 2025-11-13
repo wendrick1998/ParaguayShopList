@@ -7,6 +7,12 @@ import estoqueRoutes from './routes/estoqueRoutes.js'
 import vendasRoutes from './routes/vendasRoutes.js'
 import caixaRoutes from './routes/caixaRoutes.js'
 
+// Novas rotas - Sistema de Importação de iPhones
+import iphonesRoutes from './routes/iphones.routes.js'
+import leiloesRoutes from './routes/leiloes.routes.js'
+import enviosRoutes from './routes/envios.routes.js'
+import cambioRoutes from './routes/cambio.routes.js'
+
 dotenv.config()
 
 const app = express()
@@ -21,12 +27,18 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'SEC+ API is running' })
 })
 
-// Routes
+// Routes - Originais
 app.use('/api/auth', authRoutes)
 app.use('/api/produtos', produtosRoutes)
 app.use('/api/estoque', estoqueRoutes)
 app.use('/api/vendas', vendasRoutes)
 app.use('/api/caixa', caixaRoutes)
+
+// Routes - Sistema de Importação de iPhones
+app.use('/api/iphones', iphonesRoutes)
+app.use('/api/leiloes', leiloesRoutes)
+app.use('/api/envios', enviosRoutes)
+app.use('/api/cambio', cambioRoutes)
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
