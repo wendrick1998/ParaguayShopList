@@ -1,0 +1,225 @@
+// Schema específico para negócio de importação de iPhones
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  email     String   @unique
+  senha     String
+  papel     String   @default("vendedor") // vendedor, gerente, admin
+  lojaId    Int
+  loja      Loja     @relation(fields: [lojaId], references: [id])
+  vendas    Venda[]
+  caixas    Caixa[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("usuarios")
+}
+
+model Loja {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  cnpj      String?  @unique
+  telefone  String?
+  endereco  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  usuarios  Usuario[]
+  iphones   iPhone[]
+  vendas    Venda[]
+  leiloes   Leilao[]
+  envios    Envio[]
+  caixas    Caixa[]
+
+  @@map("lojas")
+}
+
+// 📱 Modelo principal: iPhone
+model iPhone {
+  id            Int       @id @default(autoincrement())
+  imei          String    @unique // CRÍTICO - identificador único
+  modelo        String    // iPhone 13, 14, 15, 15 Pro, 15 Pro Max, etc
+  capacidade    String    // 64GB, 128GB, 256GB, 512GB, 1TB
+  cor           String    // Preto, Branco, Azul, Rosa, etc
+  estado        String    // Novo, Semi-novo, Grade A, Grade B, Grade C
+
+  // Compra e Leilão
+  leilaoId      Int?
+  leilao        Leilao?   @relation(fields: [leilaoId], references: [id])
+  fornecedor    String?   // Nome do site de leilão
+  dataCompra    DateTime?
+  precoUSD      Float     // Preço de compra em dólares
+  cotacaoDolar  Float     // Taxa de câmbio no dia da compra
+  custoBRL      Float     // precoUSD * cotacaoDolar (calculado)
+  freteUSD      Float     @default(0)
+  imposto       Float     // 60% sobre (preço + frete)
+  custoTotal    Float     // custoBRL + (freteUSD * cotacao) + imposto
+
+  // Venda
+  precoVendaBRL Float?    // Preço de venda no Brasil
+  margemLucro   Float?    // precoVendaBRL - custoTotal
+  vendido       Boolean   @default(false)
+  vendaId       Int?
+  venda         Venda?    @relation(fields: [vendaId], references: [id])
+
+  // Logística
+  envioId       Int?
+  envio         Envio?    @relation(fields: [envioId], references: [id])
+  status        String    @default("estoque") // em_leilao, comprado, em_transito, no_paraguai, no_brasil, vendido
+
+  // Dados da loja
+  lojaId        Int
+  loja          Loja      @relation(fields: [lojaId], references: [id])
+
+  // Observações e fotos
+  observacoes   String?
+  foto1Url      String?
+  foto2Url      String?
+  foto3Url      String?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("iphones")
+}
+
+// 🎯 Leilão (origem dos iPhones)
+model Leilao {
+  id            Int       @id @default(autoincrement())
+  nome          String    // Ex: "Leilão eBay Março 2024"
+  site          String    // eBay, Copart, etc
+  dataLeilao    DateTime
+  lote          String?   // Número do lote
+  totalGastoUSD Float     @default(0) // Total gasto no leilão
+  totalGastoBRL Float     @default(0) // Convertido
+  cotacaoDolar  Float     // Taxa usada
+  iphones       iPhone[]
+  lojaId        Int
+  loja          Loja      @relation(fields: [lojaId], references: [id])
+  observacoes   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("leiloes")
+}
+
+// 🚚 Envio/Rastreamento
+model Envio {
+  id                Int       @id @default(autoincrement())
+  freteiroNome      String    // Nome do freteiro
+  freteiroTelefone  String?
+  freteiroEmail     String?
+  codigoRastreio    String?
+  status            String    @default("aguardando") // aguardando, em_transito, entregue, atrasado
+  origem            String    @default("EUA")
+  destino           String    @default("Paraguai")
+  dataPrevista      DateTime?
+  dataEntrega       DateTime?
+  custoFreteUSD     Float
+  custoFreteBRL     Float     // Convertido
+  cotacaoDolar      Float
+  iphones           iPhone[]
+  lojaId            Int
+  loja              Loja      @relation(fields: [lojaId], references: [id])
+  observacoes       String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@map("envios")
+}
+
+// 💰 Venda
+model Venda {
+  id              Int         @id @default(autoincrement())
+  numero          String      @unique
+  usuarioId       Int
+  usuario         Usuario     @relation(fields: [usuarioId], references: [id])
+  lojaId          Int
+  loja            Loja        @relation(fields: [lojaId], references: [id])
+  total           Float
+  desconto        Float       @default(0)
+  formaPagamento  String      // dinheiro, credito, debito, pix
+  tipoVenda       String      @default("avista") // avista, prazo
+  status          String      @default("concluida") // concluida, cancelada, pendente
+  observacoes     String?
+
+  // Produtos vendidos
+  iphones         iPhone[]
+
+  // Venda a prazo
+  vendaPrazo      VendaPrazo?
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("vendas")
+}
+
+// 💳 Venda a Prazo
+model VendaPrazo {
+  id              Int       @id @default(autoincrement())
+  vendaId         Int       @unique
+  venda           Venda     @relation(fields: [vendaId], references: [id])
+  numeroParcelas  Int
+  valorParcela    Float
+  parcelas        Parcela[]
+  createdAt       DateTime  @default(now())
+
+  @@map("vendas_prazo")
+}
+
+// 📅 Parcela
+model Parcela {
+  id              Int         @id @default(autoincrement())
+  vendaPrazoId    Int
+  vendaPrazo      VendaPrazo  @relation(fields: [vendaPrazoId], references: [id])
+  numeroParcela   Int
+  valor           Float
+  dataVencimento  DateTime
+  dataPagamento   DateTime?
+  status          String      @default("pendente") // pendente, pago, atrasado
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("parcelas")
+}
+
+// 💵 Caixa
+model Caixa {
+  id              Int       @id @default(autoincrement())
+  lojaId          Int
+  loja            Loja      @relation(fields: [lojaId], references: [id])
+  usuarioId       Int
+  usuario         Usuario   @relation(fields: [usuarioId], references: [id])
+  dataAbertura    DateTime  @default(now())
+  dataFechamento  DateTime?
+  saldoInicial    Float
+  saldoFinal      Float?
+  totalVendas     Float     @default(0)
+  status          String    @default("aberto") // aberto, fechado
+  observacoes     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("caixas")
+}
+
+// 💱 Histórico de Cotação (para análise)
+model CotacaoDolar {
+  id        Int      @id @default(autoincrement())
+  valor     Float    // Taxa do dia
+  data      DateTime @unique
+  fonte     String   // API usada
+  createdAt DateTime @default(now())
+
+  @@map("cotacoes_dolar")
+}
